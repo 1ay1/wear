@@ -3,3 +3,5 @@ config/neowall/state/
 *.bak
 *.bak-*
 .DS_Store
+__pycache__/
+*.pyc
