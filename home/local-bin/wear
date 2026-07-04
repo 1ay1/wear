@@ -180,7 +180,11 @@ write_generated_theme() { # $1=slug  $2=display-name  $3=mode  $4=wallpaper(opti
     for k in radius border_width gap_in gap_out layout \
              opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow \
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
-             bar_spacing bar_radius font_ui font_mono font_size_ui font_size_term \
+             bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
+             bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
+             bar_mod_memory bar_mod_gpu bar_mod_disk bar_mod_audio bar_mod_network \
+             bar_mod_bluetooth bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power \
+             font_ui font_mono font_size_ui font_size_term \
              font_weight term_opacity term_padding cursor_size qt_style kvantum_theme; do
       printf '%s="%s"\n' "$k" "${PAL[$k]:-}"
     done
@@ -229,10 +233,14 @@ load_palette() {
     opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow
     anim_speed anim_bezier anim_style
     bar_position bar_height bar_margin bar_spacing bar_radius
+    bar_opacity bar_border_width bar_font_size bar_workspaces bar_clock
+    bar_mod_window bar_mod_cpu bar_mod_temp bar_mod_memory bar_mod_gpu
+    bar_mod_disk bar_mod_audio bar_mod_network bar_mod_bluetooth
+    bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power
     font_ui font_mono font_size_ui font_size_term font_weight
     term_opacity term_padding cursor_size qt_style kvantum_theme)
   local k
-  for k in "${keys[@]}"; do PAL[$k]="${!k}"; done
+  for k in "${keys[@]}"; do PAL[$k]="${!k:-}"; done
 
   # --- overlay live per-key tweaks from OVERRIDES (the tweaker writes these) ---
   # Each line is  key=value  (unquoted). Colour keys are 6 hex digits (no #).
@@ -269,10 +277,17 @@ load_palette() {
   : "${PAL[anim_style]:=slide}"
   : "${PAL[bar_position]:=top}";   : "${PAL[bar_height]:=36}"
   : "${PAL[bar_margin]:=8}";       : "${PAL[bar_spacing]:=6}"; : "${PAL[bar_radius]:=0}"
+  : "${PAL[bar_opacity]:=0.88}";   : "${PAL[bar_border_width]:=1}"
+  : "${PAL[bar_workspaces]:=5}";   : "${PAL[bar_clock]:=seconds}"
+  local _bm
+  for _bm in window cpu temp memory gpu disk audio network bluetooth uptime kernel tray power; do
+    : "${PAL[bar_mod_$_bm]:=on}"
+  done
   : "${PAL[font_ui]:=JetBrainsMono Nerd Font}"
   : "${PAL[font_mono]:=JetBrainsMono Nerd Font}"
   : "${PAL[font_size_ui]:=13}";    : "${PAL[font_size_term]:=11.0}"
   : "${PAL[font_weight]:=bold}"
+  : "${PAL[bar_font_size]:=${PAL[font_size_ui]}}"
   : "${PAL[term_opacity]:=1.0}";   : "${PAL[term_padding]:=0}"
   : "${PAL[cursor_size]:=24}";     : "${PAL[qt_style]:=Fusion}"
   : "${PAL[kvantum_theme]:=Sweet}"
@@ -281,6 +296,32 @@ load_palette() {
   local g="${PAL[glow]}"
   PAL[glow_alpha]="$(awk -v g="$g" 'BEGIN{printf "%02x", int(g*255)}')"
   PAL[glow_px]="$(awk -v g="$g" 'BEGIN{printf "%d", int(g*24)+2}')"
+
+  # derived: waybar module arrays from the bar_mod_* toggles
+  local _ml='"custom/arch", "hyprland/workspaces"'
+  if [ "${PAL[bar_mod_window]}" = on ]; then _ml+=', "hyprland/window"'; fi
+  PAL[bar_modules_left]="$_ml"
+  local _mr=""
+  if [ "${PAL[bar_mod_cpu]}" = on ];       then _mr+='"cpu", '; fi
+  if [ "${PAL[bar_mod_temp]}" = on ];      then _mr+='"temperature", '; fi
+  if [ "${PAL[bar_mod_memory]}" = on ];    then _mr+='"memory", '; fi
+  if [ "${PAL[bar_mod_gpu]}" = on ];       then _mr+='"custom/gpu", '; fi
+  if [ "${PAL[bar_mod_disk]}" = on ];      then _mr+='"disk", '; fi
+  if [ "${PAL[bar_mod_audio]}" = on ];     then _mr+='"pulseaudio", '; fi
+  if [ "${PAL[bar_mod_network]}" = on ];   then _mr+='"network", '; fi
+  if [ "${PAL[bar_mod_bluetooth]}" = on ]; then _mr+='"bluetooth", '; fi
+  if [ "${PAL[bar_mod_uptime]}" = on ];    then _mr+='"custom/uptime", '; fi
+  if [ "${PAL[bar_mod_kernel]}" = on ];    then _mr+='"custom/kernel", '; fi
+  if [ "${PAL[bar_mod_tray]}" = on ];      then _mr+='"tray", '; fi
+  if [ "${PAL[bar_mod_power]}" = on ];     then _mr+='"custom/power", '; fi
+  PAL[bar_modules_right]="${_mr%, }"
+
+  # derived: clock format + refresh interval from bar_clock
+  case "${PAL[bar_clock]}" in
+    minutes) PAL[clock_fmt]=' {:%H:%M}';     PAL[clock_interval]=60 ;;
+    12h)     PAL[clock_fmt]=' {:%I:%M %p}';  PAL[clock_interval]=60 ;;
+    *)       PAL[clock_fmt]=' {:%H:%M:%S}';  PAL[clock_interval]=1 ;;
+  esac
 
   # derived shades — computed mixes so widget hover/pressed states follow the
   # palette automatically (no extra keys for the user to define).
@@ -502,7 +543,11 @@ save_theme() {  # $1=new slug
              on_accent radius border_width gap_in gap_out layout \
              opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow \
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
-             bar_spacing bar_radius font_ui font_mono font_size_ui font_size_term \
+             bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
+             bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
+             bar_mod_memory bar_mod_gpu bar_mod_disk bar_mod_audio bar_mod_network \
+             bar_mod_bluetooth bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power \
+             font_ui font_mono font_size_ui font_size_term \
              font_weight term_opacity term_padding cursor_size qt_style kvantum_theme; do
       printf '%s="%s"\n' "$k" "${PAL[$k]:-}"
     done
@@ -573,6 +618,24 @@ bar_height|Bar height|int:20:56:2|px
 bar_margin|Bar margin|int:0:24:2|px from screen edge
 bar_spacing|Bar spacing|int:0:20:1|px between modules
 bar_radius|Bar radius|int:0:24:2|module rounding px
+bar_opacity|Bar opacity|float:0.3:1.0:0.02|background alpha
+bar_border_width|Bar border|int:0:4:1|px around module groups
+bar_font_size|Bar font size|int:9:20:1|px (independent of UI font size)
+bar_workspaces|Workspaces shown|int:1:10:1|persistent workspace pills
+bar_clock|Clock style|choice|seconds,minutes,12h
+bar_mod_window|Window title|choice|on,off
+bar_mod_cpu|CPU module|choice|on,off
+bar_mod_temp|Temperature module|choice|on,off
+bar_mod_memory|Memory module|choice|on,off
+bar_mod_gpu|GPU module|choice|on,off
+bar_mod_disk|Disk module|choice|on,off
+bar_mod_audio|Audio module|choice|on,off
+bar_mod_network|Network module|choice|on,off
+bar_mod_bluetooth|Bluetooth module|choice|on,off
+bar_mod_uptime|Uptime module|choice|on,off
+bar_mod_kernel|Kernel module|choice|on,off
+bar_mod_tray|System tray|choice|on,off
+bar_mod_power|Power button|choice|on,off
 ## Type
 font_ui|UI font|font|panel/menus/GTK
 font_mono|Mono font|font|terminal

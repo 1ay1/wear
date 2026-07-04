@@ -89,7 +89,11 @@ choosers. Every change hits the whole desktop **as you drag**.
 - **Shape** — rounding, border width, inner/outer gaps, tiling layout.
 - **Feel** — opacities, blur size/passes/vibrancy, glow, animation speed &
   style, terminal opacity & padding.
-- **Bar** — position, height, margin, spacing, radius.
+- **Bar** — everything: position, height, margin, spacing, radius, opacity,
+  border, its own font size, workspace count, clock style (seconds / minutes /
+  12 h), and a **switch for every module** — window title, CPU, temperature,
+  memory, GPU, disk, audio, network, bluetooth, uptime, kernel, tray, power.
+  Waybar restarts instantly on each change.
 - **Type** — UI & mono fonts, sizes, weight.
 - **System** — dark/light mode, icon theme, cursor theme & size, wallpaper
   shader — all discovered from what's actually installed.

@@ -261,6 +261,15 @@ class WearWindow(Adw.ApplicationWindow):
                 page.add(term_grp)
                 for p in props:
                     (term_grp if p["key"] in ANSI_KEYS else ui_grp).add(self._build_row(p))
+            elif cat == "Bar":
+                look_grp = Adw.PreferencesGroup(
+                    title="Geometry & look",
+                    description="Changes restart waybar instantly.")
+                mod_grp = Adw.PreferencesGroup(title="Modules")
+                page.add(look_grp)
+                page.add(mod_grp)
+                for p in props:
+                    (mod_grp if p["key"].startswith("bar_mod_") else look_grp).add(self._build_row(p))
             else:
                 grp = Adw.PreferencesGroup(title=cat)
                 page.add(grp)
@@ -313,8 +322,12 @@ class WearWindow(Adw.ApplicationWindow):
             return row
 
         if typ == "choice":
-            row = Adw.ComboRow(title=label, subtitle=spec)
             opts = [o for o in spec.split(",") if o]
+            if opts == ["on", "off"] or opts == ["off", "on"]:
+                row = Adw.SwitchRow(title=label, active=(val == "on"))
+                row.connect("notify::active", self._on_switch, key)
+                return row
+            row = Adw.ComboRow(title=label, subtitle=spec)
             model = Gtk.StringList.new(opts)
             row.set_model(model)
             if val in opts:
@@ -369,6 +382,9 @@ class WearWindow(Adw.ApplicationWindow):
         idx = row.get_selected()
         if 0 <= idx < len(opts):
             self._set(key, opts[idx])
+
+    def _on_switch(self, row, _pspec, key):
+        self._set(key, "on" if row.get_active() else "off")
 
     def _on_font(self, btn, key, row):
         desc = btn.get_font_desc()

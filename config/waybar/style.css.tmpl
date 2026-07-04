@@ -3,7 +3,7 @@
 
 * {
     font-family: "{{font_ui}}", "Symbols Nerd Font", monospace;
-    font-size: {{font_size_ui}}px;
+    font-size: {{bar_font_size}}px;
     font-weight: {{font_weight}};
     min-height: 0;
     border-radius: {{bar_radius}}px;
@@ -15,8 +15,8 @@ window#waybar {
 }
 
 .modules-left, .modules-center, .modules-right {
-    background: alpha(@bg, 0.88);
-    border: 1px solid alpha(@green, 0.45);
+    background: alpha(@bg, {{bar_opacity}});
+    border: {{bar_border_width}}px solid alpha(@green, 0.45);
     box-shadow: 0 0 {{glow_px}}px alpha(@green, {{glow}});
     padding: 0 6px;
 }

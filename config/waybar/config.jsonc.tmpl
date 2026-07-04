@@ -7,9 +7,9 @@
     "margin-right": {{bar_margin}},
     "spacing": {{bar_spacing}},
 
-    "modules-left": ["custom/arch", "hyprland/workspaces", "hyprland/window"],
+    "modules-left": [{{bar_modules_left}}],
     "modules-center": ["clock"],
-    "modules-right": ["cpu", "temperature", "memory", "custom/gpu", "disk", "pulseaudio", "network", "bluetooth", "custom/uptime", "custom/kernel", "tray", "custom/power"],
+    "modules-right": [{{bar_modules_right}}],
 
     "custom/arch": {
         "format": "❯_",
@@ -32,7 +32,7 @@
             "9": "0x9",
             "10": "0xA"
         },
-        "persistent-workspaces": { "*": 5 }
+        "persistent-workspaces": { "*": {{bar_workspaces}} }
     },
 
     "hyprland/window": {
@@ -43,8 +43,8 @@
     },
 
     "clock": {
-        "format": " {:%H:%M:%S}",
-        "interval": 1,
+        "format": "{{clock_fmt}}",
+        "interval": {{clock_interval}},
         "format-alt": " {:%Y-%m-%dT%H:%M:%S%z}",
         "tooltip-format": "<tt><small>{calendar}</small></tt>",
         "calendar": {
