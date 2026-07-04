@@ -372,11 +372,15 @@ load_palette() {
 '#custom-arch, #clock, #custom-cpu, #cpu, #memory, #temperature, #disk, #custom-gpu, #pulseaudio, #network, #bluetooth, #custom-uptime, #custom-kernel, #custom-power { margin: 3px 4px; padding: 6px 2px; min-width: 0; } '\
 '#window { min-width: 0; min-height: 0; margin: 0; padding: 0; opacity: 0; } '\
 '#workspaces { padding: 0; margin: 4px 0; } '\
-'#workspaces button { min-width: 26px; min-height: 26px; padding: 0; margin: 3px auto; border-radius: 6px; } '\
-'#tray { margin: 4px auto; padding: 4px 0; } '\
+'#workspaces button { min-width: 26px; min-height: 26px; padding: 0; margin: 3px 0; border-radius: 6px; } '\
+'#tray { margin: 4px 0; padding: 4px 0; } '\
 '#tray > .item { margin: 2px 0; }'
+    # vertical waybar wants a WIDTH (strip thickness), not a height — with
+    # "height" set it renders only that many px tall. Match the css min-width.
+    PAL[bar_size_line]='"width": 46'
   else
     PAL[bar_vertical_css]=''
+    PAL[bar_size_line]="\"height\": ${PAL[bar_height]}"
   fi
   # a vertical bar has no room for wide multi-stat labels — force the compact
   # 'minimal' density (glyph/short value only) unless the user explicitly asked
