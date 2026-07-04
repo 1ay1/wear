@@ -354,6 +354,18 @@ load_palette() {
   PAL[glow_alpha]="$(awk -v g="$g" 'BEGIN{printf "%02x", int(g*255)}')"
   PAL[glow_px]="$(awk -v g="$g" 'BEGIN{printf "%d", int(g*24)+2}')"
 
+  # derived: fastfetch box-border colour. The templates carry the literal
+  # JSON escape text '\u001b[38;2;{{ff_rgb}}m' (fastfetch unescapes \u001b at
+  # render time; a raw ESC byte would be rejected by its JSON parser). We only
+  # substitute the dimmed accent as 'R;G;B' here -- keeping the backslash out
+  # of the sed replacement avoids GNU sed eating '\u'. ff_rgb has no '|' or
+  # newline, so it's safe with render()'s '|'-delimited sed program.
+  local _fr _fg _fb
+  read -r _fr _fg _fb <<<"$(hex_to_rgb "${PAL[accent]}" | tr ',' ' ')"
+  # scale the accent to ~55% brightness for a calm frame that doesn't shout
+  _fr=$(( _fr * 55 / 100 )); _fg=$(( _fg * 55 / 100 )); _fb=$(( _fb * 55 / 100 ))
+  PAL[ff_rgb]="${_fr};${_fg};${_fb}"
+
   # derived: waybar edge margins. bar_margin is the gap to the screen edge the
   # bar hugs (top-of-screen bar -> top; bottom bar -> bottom); the opposite
   # edge stays flush at 0. bar_margin_x is the shared left/right gap.
@@ -693,6 +705,9 @@ apply_theme() {
   render "$REPO/config/satty/config.toml.tmpl"            "$CFG/satty/config.toml" &
   render "$REPO/config/wlogout/style.css.tmpl"            "$CFG/wlogout/style.css" &
   render "$REPO/config/phosphor/colors.sh.tmpl"           "$CFG/phosphor/colors.sh" &
+  render "$REPO/config/fastfetch/phosphor.jsonc.tmpl"      "$CFG/fastfetch/phosphor.jsonc" &
+  render "$REPO/config/fastfetch/compact.jsonc.tmpl"       "$CFG/fastfetch/compact.jsonc" &
+  render "$REPO/config/fastfetch/minimal.jsonc.tmpl"       "$CFG/fastfetch/minimal.jsonc" &
   render "$REPO/kde/color-schemes/theme.colors.tmpl"      "$HOME/.local/share/color-schemes/Phosphor.colors" &
   wait
   chmod +x "$CFG/waybar/scripts/gpu.sh" "$CFG/waybar/scripts/cpu.sh" 2>/dev/null || true

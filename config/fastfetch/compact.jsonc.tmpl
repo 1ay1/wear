@@ -1,0 +1,31 @@
+// {{THEME_NAME}} fastfetch -- COMPACT tier (48..73 cols). No logo, narrow
+// box, shorter keys. Rendered by `wear`; picked by fastfetch-responsive.sh.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": { "type": "none" },
+  "display": {
+    "separator": " ",
+    "color": { "keys": "green", "title": "green" },
+    "key": { "width": 8 }
+  },
+  "modules": [
+    { "type": "custom", "format": "\u001b[38;2;{{ff_rgb}}m┌────────[ DIAGNOSTIC ]────────┐\u001b[0m" },
+    { "type": "title", "key": " node", "format": "{user-name}@{host-name}", "keyColor": "green" },
+    { "type": "os", "key": " os", "format": "{name}", "keyColor": "green" },
+    { "type": "kernel", "key": " kern", "format": "{release}", "keyColor": "green" },
+    { "type": "uptime", "key": " up", "keyColor": "green" },
+    { "type": "packages", "key": " pkgs", "keyColor": "green" },
+    { "type": "custom", "format": "\u001b[38;2;{{ff_rgb}}m├──────────[ UI ]──────────────┤\u001b[0m" },
+    { "type": "wm", "key": " wm", "keyColor": "cyan" },
+    { "type": "display", "key": " disp", "compactType": "original-with-refresh-rate", "keyColor": "cyan" },
+    { "type": "terminal", "key": " term", "keyColor": "cyan" },
+    { "type": "custom", "format": "\u001b[38;2;{{ff_rgb}}m├────────[ HARDWARE ]──────────┤\u001b[0m" },
+    { "type": "cpu", "key": " cpu", "format": "{name}", "keyColor": "yellow" },
+    { "type": "gpu", "key": " gpu", "format": "{name}", "keyColor": "yellow" },
+    { "type": "memory", "key": " mem", "keyColor": "yellow" },
+    { "type": "disk", "key": " disk", "folders": "/", "keyColor": "yellow" },
+    { "type": "localip", "key": " net", "showIpv4": true, "compact": true, "keyColor": "yellow" },
+    { "type": "custom", "format": "\u001b[38;2;{{ff_rgb}}m└──────────────────────────────┘\u001b[0m" },
+    { "type": "colors", "paddingLeft": 1, "symbol": "block" }
+  ]
+}

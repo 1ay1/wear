@@ -1,0 +1,51 @@
+// {{THEME_NAME}} fastfetch -- WIDE tier (>= 74 cols). Reads like a boot
+// diagnostic, not a toy banner. Rendered by `wear`; box border + accents
+// follow the live palette. Picked automatically by fastfetch-responsive.sh.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "small",
+    "color": { "1": "green" },
+    "padding": { "top": 1, "right": 3 }
+  },
+  "display": {
+    "separator": " ",
+    "color": { "keys": "green", "title": "green" },
+    "key": { "width": 14 }
+  },
+  "modules": [
+    {
+      "type": "custom",
+      "format": "\u001b[38;2;{{ff_rgb}}m┌──────────────[ SYSTEM DIAGNOSTIC ]──────────────┐\u001b[0m"
+    },
+    { "type": "title", "key": "  node", "format": "{user-name}@{host-name}", "keyColor": "green" },
+    { "type": "os", "key": "  os", "format": "{name} {version}", "keyColor": "green" },
+    { "type": "kernel", "key": "  kernel", "format": "{release}", "keyColor": "green" },
+    { "type": "uptime", "key": "  uptime", "keyColor": "green" },
+    { "type": "packages", "key": "  pkgs", "keyColor": "green" },
+    { "type": "shell", "key": "  shell", "keyColor": "green" },
+    {
+      "type": "custom",
+      "format": "\u001b[38;2;{{ff_rgb}}m├──────────────[ COMPOSITOR / UI ]────────────────┤\u001b[0m"
+    },
+    { "type": "wm", "key": "  wm", "keyColor": "cyan" },
+    { "type": "display", "key": "  display", "compactType": "original-with-refresh-rate", "keyColor": "cyan" },
+    { "type": "terminal", "key": "  term", "keyColor": "cyan" },
+    { "type": "terminalfont", "key": "  font", "keyColor": "cyan" },
+    {
+      "type": "custom",
+      "format": "\u001b[38;2;{{ff_rgb}}m├──────────────[ HARDWARE ]───────────────────────┤\u001b[0m"
+    },
+    { "type": "cpu", "key": "  cpu", "format": "{name} ({cores-physical}c/{cores-logical}t)", "keyColor": "yellow" },
+    { "type": "gpu", "key": "  gpu", "format": "{name}", "keyColor": "yellow" },
+    { "type": "memory", "key": "  mem", "keyColor": "yellow" },
+    { "type": "swap", "key": "  vmem", "keyColor": "yellow" },
+    { "type": "disk", "key": "  disk", "folders": "/", "keyColor": "yellow" },
+    { "type": "localip", "key": "  net", "showIpv4": true, "compact": true, "keyColor": "yellow" },
+    {
+      "type": "custom",
+      "format": "\u001b[38;2;{{ff_rgb}}m└─────────────────────────────────────────────────┘\u001b[0m"
+    },
+    { "type": "colors", "paddingLeft": 2, "symbol": "block" }
+  ]
+}

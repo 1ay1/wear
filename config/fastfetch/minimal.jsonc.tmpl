@@ -1,0 +1,25 @@
+// {{THEME_NAME}} fastfetch -- MINIMAL tier (< 48 cols). No logo, no box art;
+// just the essential rows. Rendered by `wear`; picked by
+// fastfetch-responsive.sh on very narrow terminals (phones over SSH, tmux
+// splits, popups).
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": { "type": "none" },
+  "display": {
+    "separator": " ",
+    "color": { "keys": "green", "title": "green" },
+    "key": { "width": 6 }
+  },
+  "modules": [
+    { "type": "custom", "format": "\u001b[38;2;{{ff_rgb}}m~ SYSTEM ~\u001b[0m" },
+    { "type": "title", "key": "host", "format": "{user-name}@{host-name}", "keyColor": "green" },
+    { "type": "os", "key": "os", "format": "{name}", "keyColor": "green" },
+    { "type": "kernel", "key": "kern", "format": "{release}", "keyColor": "green" },
+    { "type": "uptime", "key": "up", "keyColor": "green" },
+    { "type": "wm", "key": "wm", "keyColor": "cyan" },
+    { "type": "cpu", "key": "cpu", "format": "{name}", "keyColor": "yellow" },
+    { "type": "gpu", "key": "gpu", "format": "{name}", "keyColor": "yellow" },
+    { "type": "memory", "key": "mem", "keyColor": "yellow" },
+    { "type": "colors", "symbol": "block" }
+  ]
+}

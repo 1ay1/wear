@@ -142,7 +142,7 @@
         "exec": "echo \"$(uname -r | cut -d- -f1)-$(uname -r | grep -oE '[a-z]+$' || echo lnx)\"; ",
         "format": " {}",
         "interval": 3600,
-        "on-click": "kitty --class fastfetch-float -e sh -c 'fastfetch 2>/dev/null || uname -a; echo; read -n1'",
+        "on-click": "kitty --class fastfetch-float -e sh -c '$HOME/.local/bin/fastfetch-responsive.sh 2>/dev/null || fastfetch 2>/dev/null || uname -a; echo; read -n1'",
         "tooltip": false
     },
 

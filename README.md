@@ -249,6 +249,12 @@ Your shell follows too — every switch renders `~/.config/phosphor/colors.sh`
 [ -f ~/.config/phosphor/colors.sh ] && . ~/.config/phosphor/colors.sh
 ```
 
+And your login banner follows — **fastfetch** is themed (the SYSTEM DIAGNOSTIC
+frame borrows the live accent) and **responsive**: `fastfetch-responsive.sh`
+measures the terminal at launch and picks the widest layout that fits — full
+logo + box on a wide window, a compact frame in a split, essentials-only on a
+phone over SSH. Nothing ever wraps or gets clipped.
+
 ---
 
 ## ✍️ Make your own theme
@@ -300,7 +306,7 @@ placeholders; `wear` renders them into `~/.config`.
 | `neowall/` | 40+ animated GPU-shader wallpapers |
 | `wlogout/` | Logout menu |
 | `satty/` | Screenshot annotator |
-| `home/local-bin/` | `wear`, `wear-gui`, `shader-switch.sh` |
+| `home/local-bin/` | `wear`, `wear-gui`, `shader-switch.sh`, `fastfetch-responsive.sh` |
 | `themes/` | The palette files |
 
 Defaults: **JetBrainsMono Nerd Font** · **Bibata-Modern-Amber** cursor ·
