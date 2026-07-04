@@ -1,10 +1,10 @@
 # ============================================================================
 #  NeoWall  •  Ayush's rig  •  "Take the red pill." 🔴
-#  GPU shader wallpaper — synthwave by default, cycles nerdy classics.
+#  GPU shader wallpaper — phosphor_deck by default, from a hand-picked set.
 # ============================================================================
 
 default {
-  # 🌆 80s synthwave grid — neon sunset vibes
+  # 📟 instrument-grade phosphor trace — the flagship deck
   # Trailing slash = cycle every shader in the folder; shuffle keeps it fresh.
   shader phosphor_deck.glsl
   shader_speed 1.0
