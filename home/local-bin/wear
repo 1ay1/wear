@@ -947,7 +947,7 @@ bar_glow_text|Neon text glow|choice|off,on
 bar_clock|Clock style|choice|seconds,minutes,12h,12h-sec,date,day-time,datetime,iso
 bar_height|Bar height|int:20:56:2|px
 bar_margin|Bar edge margin|int:0:24:2|gap to the screen edge the bar hugs
-bar_margin_x|Bar side margin|int:0:40:2|gap on the left & right
+bar_margin_x|Bar side margin|int:0:40:2|gap on the left and right
 bar_spacing|Bar spacing|int:0:20:1|px between modules
 bar_radius|Bar radius|int:0:24:2|module rounding px
 bar_opacity|Bar opacity|float:0.3:1.0:0.02|background alpha

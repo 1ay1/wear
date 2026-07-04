@@ -90,6 +90,110 @@ def rgba_to_hex(rgba: Gdk.RGBA) -> str:
     )
 
 
+def _rgb(h: str):
+    """'aabbcc' -> (r,g,b) floats in 0..1 for Cairo."""
+    h = (h or "000000").lstrip("#")
+    if len(h) != 6:
+        h = "000000"
+    return (int(h[0:2], 16) / 255, int(h[2:4], 16) / 255, int(h[4:6], 16) / 255)
+
+
+class PreviewStrip(Gtk.DrawingArea):
+    """A live 'mini desktop' painted with Cairo from the current palette: a
+    wallpaper field, a title-barred window with sample text, the accent trio as
+    chips, and the ANSI row. It repaints instantly on every tweak (no desktop
+    round-trip) so you SEE a colour/opacity/radius change before the real
+    desktop even reloads. Call set_palette(values) to update."""
+
+    def __init__(self):
+        super().__init__()
+        self.vals: dict[str, str] = {}
+        self.set_content_height(96)
+        self.set_draw_func(self._draw)
+
+    def set_palette(self, vals: dict[str, str]):
+        self.vals = vals or {}
+        self.queue_draw()
+
+    def _draw(self, _area, cr, w, h, *_):
+        v = self.vals
+        def col(k, fb="000000"):
+            return _rgb(v.get(k) or fb)
+        try:
+            radius = float(v.get("radius", 8) or 8)
+        except ValueError:
+            radius = 8.0
+        try:
+            opac = float(v.get("opacity_active", 1.0) or 1.0)
+        except ValueError:
+            opac = 1.0
+        # wallpaper: bg_dim wash
+        cr.set_source_rgb(*col("bg_dim", v.get("bg", "101010")))
+        cr.rectangle(0, 0, w, h)
+        cr.fill()
+        # the bar strip across the top, in bg_alt with an accent left cap
+        bar_h = 16
+        cr.set_source_rgb(*col("bg_alt", v.get("bg", "101010")))
+        cr.rectangle(0, 0, w, bar_h)
+        cr.fill()
+        cr.set_source_rgb(*col("accent"))
+        cr.rectangle(8, 4, 26, bar_h - 8)
+        cr.fill()
+        # a couple of bar module ticks in fg_dim
+        cr.set_source_rgb(*col("fg_dim", v.get("fg", "cccccc")))
+        for i in range(3):
+            cr.rectangle(w - 84 + i * 26, 6, 18, 4)
+            cr.fill()
+        # a window: rounded rect in bg (honouring opacity), border in accent
+        wx, wy, ww, wh = 22, bar_h + 12, w - 44, h - bar_h - 24
+        rr = max(0.0, min(radius, wh / 2, 22))
+        self._rounded(cr, wx, wy, ww, wh, rr)
+        br, bg, bb = col("bg")
+        cr.set_source_rgba(br, bg, bb, opac)
+        cr.fill_preserve()
+        cr.set_source_rgb(*col("accent"))
+        cr.set_line_width(1.5)
+        cr.stroke()
+        # title bar inside the window
+        self._rounded(cr, wx, wy, ww, 14, rr, top_only=True)
+        cr.set_source_rgb(*col("surface", v.get("bg_alt", "181818")))
+        cr.fill()
+        # sample text lines (fg / fg_dim)
+        cr.set_source_rgb(*col("fg"))
+        cr.rectangle(wx + 10, wy + 22, ww * 0.5, 4); cr.fill()
+        cr.set_source_rgb(*col("fg_dim", v.get("fg", "cccccc")))
+        cr.rectangle(wx + 10, wy + 30, ww * 0.36, 3); cr.fill()
+        cr.rectangle(wx + 10, wy + 37, ww * 0.42, 3); cr.fill()
+        # accent trio chips
+        for i, k in enumerate(("accent", "accent2", "accent3")):
+            cr.set_source_rgb(*col(k))
+            cx = wx + 10 + i * 16
+            cr.arc(cx + 5, wy + wh - 12, 5, 0, 6.2832)
+            cr.fill()
+        # ANSI swatch row along the bottom-right of the window
+        ansi = ("red", "green", "yellow", "blue", "magenta", "cyan")
+        sw = 9
+        x0 = wx + ww - (len(ansi) * (sw + 2)) - 8
+        for i, k in enumerate(ansi):
+            cr.set_source_rgb(*col(k))
+            cr.rectangle(x0 + i * (sw + 2), wy + wh - 16, sw, 8)
+            cr.fill()
+
+    @staticmethod
+    def _rounded(cr, x, y, w, h, r, top_only=False):
+        import math
+        cr.new_sub_path()
+        cr.arc(x + w - r, y + r, r, -math.pi / 2, 0)
+        if top_only:
+            cr.line_to(x + w, y + h)
+            cr.line_to(x, y + h)
+        else:
+            cr.arc(x + w - r, y + h - r, r, 0, math.pi / 2)
+            cr.arc(x + r, y + h - r, r, math.pi / 2, math.pi)
+        cr.arc(x + r, y + r, r, math.pi, 3 * math.pi / 2)
+        cr.close_path()
+
+
 class WearWindow(Adw.ApplicationWindow):
     def __init__(self, app: "WearApp"):
         super().__init__(application=app, title="Appearance")
@@ -163,6 +267,21 @@ class WearWindow(Adw.ApplicationWindow):
         self.stack = Gtk.Stack()
         self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         content_tb.set_content(self.stack)
+
+        # live preview strip pinned to the bottom — a Cairo mini-desktop that
+        # repaints from the palette on every tweak, so the effect is visible
+        # instantly even before the real desktop finishes reloading.
+        self.preview = PreviewStrip()
+        preview_bar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        preview_bar.append(Gtk.Separator())
+        pv_label = Gtk.Label(label="live preview", xalign=0,
+                             css_classes=["dim-label", "caption"],
+                             margin_start=12, margin_top=4)
+        preview_bar.append(pv_label)
+        preview_bar.append(self.preview)
+        content_tb.add_bottom_bar(preview_bar)
+        self.preview.set_palette(self.values)
+
         self.content_page.set_child(content_tb)
         split.set_content(self.content_page)
 
@@ -184,6 +303,10 @@ class WearWindow(Adw.ApplicationWindow):
         """Debounced live apply so dragging a slider doesn't spam reloads."""
         if self._building:
             return  # ignore events fired while constructing widgets
+        # update the in-memory palette + repaint the preview IMMEDIATELY, so the
+        # strip reflects the change before the (debounced) desktop reload lands.
+        self.values[key] = value
+        self.preview.set_palette(self.values)
         self._pending_args = (key, value)
         if self._debounce_id:
             GLib.source_remove(self._debounce_id)
@@ -200,12 +323,17 @@ class WearWindow(Adw.ApplicationWindow):
         return False
 
     def _refresh_subtitle_cb(self) -> bool:
+        # pull the authoritative post-apply palette (values may have been clamped
+        # or a colour op resolved) and repaint the strip from truth.
+        self.values = load_values()
+        self.preview.set_palette(self.values)
         self._refresh_subtitle()
         return False
 
     def _run_and_refresh(self, *args: str):
         wear(*args)
         self.values = load_values()
+        self.preview.set_palette(self.values)
         self._build_pages()
         self._refresh_subtitle()
 
@@ -284,7 +412,7 @@ class WearWindow(Adw.ApplicationWindow):
                     (term_grp if p["key"] in ANSI_KEYS else ui_grp).add(self._build_row(p))
             elif cat == "Bar":
                 look_grp = Adw.PreferencesGroup(
-                    title="Geometry & look",
+                    title="Geometry &amp; look",
                     description="Changes restart waybar instantly.")
                 if rand_sect:
                     look_grp.set_header_suffix(self._rand_btn(rand_sect))
