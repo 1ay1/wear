@@ -61,6 +61,14 @@
         }
     },
 
+    "custom/cpu": {
+        "exec": "~/.config/waybar/scripts/cpu.sh",
+        "return-type": "json",
+        "format": "{}",
+        "interval": 2,
+        "on-click": "kitty --class htop-float -e htop"
+    },
+
     "cpu": {
         "format": "{{fmt_cpu}}",
         "interval": 2,

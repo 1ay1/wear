@@ -1,0 +1,38 @@
+#!/bin/sh
+# cpu — usage + temperature poller for waybar (json output), mirrors gpu.sh so
+# the CPU reads 'cpu 7% 44°' as one module. Format follows bar_verbosity via
+# the {{fmt_cpu_combo}} template string; sensor path is auto-detected by `wear`.
+
+# --- usage %: delta of /proc/stat over a short sample -----------------------
+read -r _ u n s i w irq sirq _ < /proc/stat
+t1=$((u + n + s + i + w + irq + sirq)); idle1=$i
+sleep 0.4
+read -r _ u n s i w irq sirq _ < /proc/stat
+t2=$((u + n + s + i + w + irq + sirq)); idle2=$i
+dt=$((t2 - t1)); didle=$((idle2 - idle1))
+if [ "$dt" -gt 0 ]; then
+  util=$(( (100 * (dt - didle) + dt / 2) / dt ))
+else
+  util=0
+fi
+
+# --- temp: the CPU sensor wear auto-detected (k10temp/coretemp/...) ----------
+tempc=0
+hwmon="{{cpu_temp_hwmon}}"
+if [ -n "$hwmon" ] && [ -r "$hwmon" ]; then
+  raw=$(cat "$hwmon" 2>/dev/null)
+  tempc=$(( raw / 1000 ))
+fi
+
+class=""
+[ "$tempc" -ge 85 ] 2>/dev/null && class="critical"
+[ "$util" -ge 90 ] 2>/dev/null && class="critical"
+
+# {{fmt_cpu_combo}} uses %U (usage%) and %T (temp C). Only placeholders present
+# are shown; when no sensor was found %T resolves to 0 and templates that omit
+# it simply never reference it.
+text="{{fmt_cpu_combo}}"
+text=$(printf '%s' "$text" | sed "s/%U/${util}/g; s/%T/${tempc}/g")
+
+printf '{"text":"%s","tooltip":"CPU\\nusage: %s%%  temp: %s°C","class":"%s"}\n' \
+    "$text" "$util" "$tempc" "$class"

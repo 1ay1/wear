@@ -312,9 +312,13 @@ load_palette() {
   : "${PAL[bar_glow_text]:=off}"      # off | on  (neon glow on stat text)
   : "${PAL[bar_workspaces]:=5}";   : "${PAL[bar_clock]:=seconds}"
   local _bm
-  for _bm in window cpu temp memory gpu disk audio network bluetooth uptime kernel tray power; do
+  for _bm in window cpu memory gpu disk audio network bluetooth uptime kernel tray power; do
     : "${PAL[bar_mod_$_bm]:=on}"
   done
+  # temp is folded into the cpu combo module (custom/cpu shows 'cpu 7% 44 deg'),
+  # so the standalone temperature module is off by default -- flip it on to get
+  # a separate temp pill back.
+  : "${PAL[bar_mod_temp]:=off}"
   : "${PAL[rofi_width]:=560}";     : "${PAL[rofi_lines]:=9}"
   : "${PAL[notif_width]:=340}";    : "${PAL[notif_position]:=top-right}"
   : "${PAL[notif_timeout]:=8}"
@@ -405,21 +409,24 @@ load_palette() {
       PAL[fmt_net_wifi]='net:{signalStrength}% ↓{bandwidthDownBytes}'
       PAL[fmt_net_eth]='eth ↓{bandwidthDownBytes} ↑{bandwidthUpBytes}'
       PAL[fmt_net_down]='net:DOWN'
-      PAL[fmt_gpu]='gpu:%U% vram:%V% %T°' ;;
+      PAL[fmt_gpu]='gpu:%U% vram:%V% %T°'
+      PAL[fmt_cpu_combo]='cpu:%U% %T°' ;;
     minimal)
       PAL[fmt_cpu]='{usage}%';                 PAL[fmt_memory]='{percentage}%'
       PAL[fmt_temp]='{temperatureC}°';         PAL[fmt_disk]='{percentage_used}%'
       PAL[fmt_audio]='{volume}%';              PAL[fmt_audio_muted]='--'
       PAL[fmt_net_wifi]='{signalStrength}%';   PAL[fmt_net_eth]='eth'
       PAL[fmt_net_down]='down'
-      PAL[fmt_gpu]='%U% %T°' ;;
+      PAL[fmt_gpu]='%U% %T°'
+      PAL[fmt_cpu_combo]='%U% %T°' ;;
     icons)
       PAL[fmt_cpu]=$'\uf4bc {usage}%';         PAL[fmt_memory]=$'\uf538 {percentage}%'
       PAL[fmt_temp]=$'\uf2c9 {temperatureC}\u00b0';  PAL[fmt_audio]='{icon} {volume}%'
       PAL[fmt_disk]=$'\uf0a0 {percentage_used}%';  PAL[fmt_audio_muted]=$'\uf026'
       PAL[fmt_net_wifi]=$'\uf1eb {signalStrength}%'; PAL[fmt_net_eth]=$'\uf0e8'
       PAL[fmt_net_down]=$'\uf127'
-      PAL[fmt_gpu]=$'\uf109 %U% %T\u00b0' ;;
+      PAL[fmt_gpu]=$'\uf109 %U% %T\u00b0'
+      PAL[fmt_cpu_combo]=$'\uf4bc %U% %T\u00b0' ;;
     *)  # normal: short prefixes, the phosphor default
       PAL[fmt_cpu]='cpu {usage}%';             PAL[fmt_memory]='mem {percentage}%'
       PAL[fmt_temp]='temp {temperatureC}°';    PAL[fmt_disk]='dsk {percentage_used}%'
@@ -427,7 +434,8 @@ load_palette() {
       PAL[fmt_net_wifi]='net {signalStrength}%'
       PAL[fmt_net_eth]='eth {bandwidthDownBytes}'
       PAL[fmt_net_down]='net down'
-      PAL[fmt_gpu]='gpu %U% %T°' ;;
+      PAL[fmt_gpu]='gpu %U% %T°'
+      PAL[fmt_cpu_combo]='cpu %U% %T°' ;;
   esac
 
   # bar_uppercase: GTK CSS has no text-transform, so genuinely upcase the
@@ -479,7 +487,7 @@ load_palette() {
   if [ "${PAL[bar_mod_window]}" = on ]; then _ml+=', "hyprland/window"'; fi
   PAL[bar_modules_left]="$_ml"
   local _mr=""
-  if [ "${PAL[bar_mod_cpu]}" = on ];       then _mr+='"cpu", '; fi
+  if [ "${PAL[bar_mod_cpu]}" = on ];       then _mr+='"custom/cpu", '; fi
   if [ "${PAL[bar_mod_temp]}" = on ];      then _mr+='"temperature", '; fi
   if [ "${PAL[bar_mod_memory]}" = on ];    then _mr+='"memory", '; fi
   if [ "${PAL[bar_mod_gpu]}" = on ];       then _mr+='"custom/gpu", '; fi
@@ -523,7 +531,7 @@ load_palette() {
   # derived: text glow on stat modules (bar_glow_text)
   [ "${PAL[bar_glow_text]}" = off ] \
     && PAL[bar_glow_text_css]='' \
-    || PAL[bar_glow_text_css]='#cpu, #memory, #temperature, #disk, #network, #pulseaudio, #custom-gpu { text-shadow: 0 0 6px alpha(currentColor, 0.6); }'
+    || PAL[bar_glow_text_css]='#cpu, #custom-cpu, #memory, #temperature, #disk, #network, #pulseaudio, #custom-gpu { text-shadow: 0 0 6px alpha(currentColor, 0.6); }'
 
   # derived: CPU temperature sensor path (portable auto-detect). Waybar's
   # temperature module defaults to thermal_zone0 which is often a chipset or
@@ -625,6 +633,8 @@ apply_theme() {
   render "$REPO/config/waybar/config.jsonc.tmpl"          "$CFG/waybar/config.jsonc"
   render "$REPO/config/waybar/scripts/gpu.sh.tmpl"         "$CFG/waybar/scripts/gpu.sh"
   chmod +x "$CFG/waybar/scripts/gpu.sh" 2>/dev/null || true
+  render "$REPO/config/waybar/scripts/cpu.sh.tmpl"         "$CFG/waybar/scripts/cpu.sh"
+  chmod +x "$CFG/waybar/scripts/cpu.sh" 2>/dev/null || true
   render "$REPO/config/hypr/theme-colors.conf.tmpl"       "$CFG/hypr/theme-colors.conf"
   render "$REPO/config/hypr/hyprlock.conf.tmpl"           "$CFG/hypr/hyprlock.conf"
   render "$REPO/config/kitty/theme-structure.conf.tmpl"   "$CFG/kitty/theme-structure.conf"

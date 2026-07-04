@@ -23,7 +23,7 @@ window#waybar {
 
 /* Per-module chrome — empty for merged (group has the pill), a floating pill
    for islands, an accent underline/outline for the accent styles. */
-#custom-arch, #window, #clock, #cpu, #memory, #temperature, #pulseaudio,
+#custom-arch, #window, #clock, #cpu, #custom-cpu, #memory, #temperature, #pulseaudio,
 #network, #bluetooth, #battery, #disk, #tray, #custom-power, #custom-gpu,
 #custom-uptime, #custom-kernel {
     {{bar_item_css}}
@@ -80,12 +80,14 @@ window#waybar {
     text-shadow: 0 0 8px alpha(@green, 0.8);
 }
 
-#cpu, #memory, #temperature, #pulseaudio, #network,
+#cpu, #custom-cpu, #memory, #temperature, #pulseaudio, #network,
 #bluetooth, #battery, #tray, #custom-power, #custom-gpu {
     margin: 2px 0;
 }
 
 #cpu        { color: @green; }
+#custom-cpu { color: @green; }
+#custom-cpu.critical { color: @red; text-shadow: 0 0 8px @red; }
 #temperature { color: @green; }
 #temperature.critical { color: @red; text-shadow: 0 0 8px @red; }
 #memory     { color: @dimgrn; }
