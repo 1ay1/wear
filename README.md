@@ -55,7 +55,8 @@ The installer will:
 | `kde/`    | KDE Plasma **Phosphor** color scheme (Dolphin, Kate, …) |
 | `neowall/` | Animated GPU-shader wallpaper (matrix/synthwave/phosphor) |
 | `wlogout/` | Themed logout menu |
-| `flameshot/` | Screenshot tool config |
+| `satty/` | Screenshot annotation editor (grim+slurp → satty; Ctrl+C copies & saves) |
+| `hypr/scripts/` | `screenshot.sh` (grim→satty) & `record.sh` (wf-recorder toggle, NVENC) |
 | `~/.local/bin/` | `shader-switch.sh` — Rofi wallpaper-shader picker |
 
 Fonts: **JetBrainsMono Nerd Font** · Cursor: **Bibata-Modern-Amber** · Icons: **Papirus-Dark (green folders)**
@@ -89,7 +90,7 @@ Fonts: **JetBrainsMono Nerd Font** · Cursor: **Bibata-Modern-Amber** · Icons: 
 
 Installed automatically: `hyprland hyprlock hypridle waybar dunst rofi kitty
 alacritty qt5ct qt6ct kvantum papirus-icon-theme bibata-cursor-theme
-ttf-jetbrains-mono-nerd ttf-firacode-nerd flameshot hyprpicker wlogout
+ttf-jetbrains-mono-nerd ttf-firacode-nerd satty grim slurp wf-recorder jq hyprpicker wlogout
 brightnessctl playerctl pipewire wireplumber dolphin wl-clipboard cliphist
 polkit-gnome libnotify` · AUR: `neowall-git catppuccin-gtk-theme-mocha papirus-folders`
 

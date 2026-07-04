@@ -1,0 +1,31 @@
+[general]
+# Start with toolbars visible; annotate then Ctrl+C / Enter to copy+save.
+fullscreen = false
+corner-roundness = 12
+initial-tool = "arrow"
+copy-command = "wl-copy"
+# Ctrl+C copies to clipboard AND writes the file (matches --save-after-copy).
+action-on-enter = "save-to-clipboard"
+early-exit = false
+# Where "save" writes when no --output-filename is given (script overrides this).
+output-filename = "~/Pictures/Screenshots/shot-%Y%m%d-%H-%M-%S.png"
+save-after-copy = true
+default-hide-toolbars = false
+primary-highlighter = "block"
+disable-notifications = false
+
+[font]
+family = "JetBrainsMono Nerd Font"
+style = "Bold"
+
+[color-palette]
+palette = [
+  "#ff5555",
+  "#f1fa8c",
+  "#50fa7b",
+  "#8be9fd",
+  "#bd93f9",
+  "#ff79c6",
+  "#ffffff",
+  "#000000",
+]

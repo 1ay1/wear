@@ -29,8 +29,8 @@ PKGS_REPO=(
   qt5ct qt6ct kvantum qt5-wayland qt6-wayland
   papirus-icon-theme bibata-cursor-theme
   ttf-jetbrains-mono-nerd ttf-firacode-nerd ttf-nerd-fonts-symbols
-  wl-clipboard cliphist grim polkit-gnome network-manager-applet blueman libnotify
-  flameshot hyprpicker wlogout brightnessctl playerctl
+  wl-clipboard cliphist grim slurp polkit-gnome network-manager-applet blueman libnotify
+  satty wf-recorder jq hyprpicker wlogout brightnessctl playerctl
   pipewire wireplumber dolphin gvfs libcanberra
   glib2 python
 )
@@ -79,8 +79,10 @@ deploy_config() {
 
   # substitute __HOME__ placeholder in templated configs
   sed -i "s|__HOME__|$HOME|g" \
-    "$CFG/qt5ct/qt5ct.conf" "$CFG/qt6ct/qt6ct.conf" \
-    "$CFG/flameshot/flameshot.ini" 2>/dev/null || true
+    "$CFG/qt5ct/qt5ct.conf" "$CFG/qt6ct/qt6ct.conf" 2>/dev/null || true
+
+  # make hypr helper scripts (screenshot/record) executable
+  chmod +x "$CFG"/hypr/scripts/*.sh 2>/dev/null || true
 }
 
 deploy_local_bin() {
@@ -94,8 +96,8 @@ deploy_local_bin() {
       info "~/.local/bin/$(basename "$s")"
     done
   fi
-  # screenshot target dir (flameshot + hyprland bind)
-  mkdir -p "$HOME/Pictures/Screenshots"
+  # screenshot + recording target dirs (hyprland binds)
+  mkdir -p "$HOME/Pictures/Screenshots" "$HOME/Videos/Recordings"
 }
 
 deploy_home() {
