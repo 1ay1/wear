@@ -30,9 +30,20 @@ decoration {
     }
 
     blur {
+        enabled = true
         size = {{blur_size}}
         passes = {{blur_passes}}
         vibrancy = {{blur_vibrancy}}
+        vibrancy_darkness = 0.0
+        # noise dithers away the visible banding rings a plain gaussian blur
+        # leaves behind -> the falloff reads smooth instead of blocky
+        noise = {{blur_noise}}
+        contrast = {{blur_contrast}}
+        brightness = {{blur_brightness}}
+        # blur the popup/tooltip layers too (waybar clock, menus) so their
+        # backdrop matches instead of showing a hard rectangular cut
+        popups = true
+        popups_ignorealpha = 0.2
     }
 }
 

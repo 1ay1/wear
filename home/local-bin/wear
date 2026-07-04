@@ -183,7 +183,8 @@ write_generated_theme() { # $1=slug  $2=display-name  $3=mode  $4=wallpaper(opti
       printf '%s="%s"\n' "$k" "${GEN[$k]}"
     done
     for k in radius border_width gap_in gap_out layout \
-             opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow \
+             opacity_active opacity_inactive blur_size blur_passes blur_vibrancy \
+             blur_noise blur_contrast blur_brightness glow \
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
              bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
              bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
@@ -237,6 +238,7 @@ load_palette() {
     on_accent
     radius border_width gap_in gap_out layout
     opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow
+    blur_noise blur_contrast blur_brightness
     anim_speed anim_bezier anim_style
     bar_position bar_height bar_margin bar_margin_x bar_spacing bar_radius
     bar_opacity bar_border_width bar_font_size bar_workspaces bar_clock
@@ -280,6 +282,10 @@ load_palette() {
   : "${PAL[opacity_active]:=1.0}"; : "${PAL[opacity_inactive]:=0.94}"
   : "${PAL[blur_size]:=8}";        : "${PAL[blur_passes]:=3}"
   : "${PAL[blur_vibrancy]:=0.25}"; : "${PAL[glow]:=0.25}"
+  # smoothness: noise breaks up banding; contrast/brightness keep the blurred
+  # backdrop legible. a touch more passes also softens the falloff.
+  : "${PAL[blur_noise]:=0.02}";    : "${PAL[blur_contrast]:=1.0}"
+  : "${PAL[blur_brightness]:=1.0}"
   : "${PAL[anim_speed]:=6}";       : "${PAL[anim_bezier]:=0.05, 0.9, 0.1, 1.05}"
   : "${PAL[anim_style]:=slide}"
   : "${PAL[bar_position]:=top}";   : "${PAL[bar_height]:=36}"
@@ -562,7 +568,8 @@ save_theme() {  # $1=new slug
              accent accent2 accent3 red green yellow blue magenta cyan \
              br_black br_red br_green br_yellow br_blue br_magenta br_cyan br_white \
              on_accent radius border_width gap_in gap_out layout \
-             opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow \
+             opacity_active opacity_inactive blur_size blur_passes blur_vibrancy \
+             blur_noise blur_contrast blur_brightness glow \
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
              bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
              bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
@@ -629,6 +636,9 @@ opacity_inactive|Inactive opacity|float:0.4:1.0:0.02|unfocused window
 blur_size|Blur size|int:0:20:1|px kernel
 blur_passes|Blur passes|int:0:5:1|more = smoother/slower
 blur_vibrancy|Blur vibrancy|float:0.0:1.0:0.05|colour saturation in blur
+blur_noise|Blur noise|float:0.0:0.2:0.005|dithers away banding — higher = smoother falloff
+blur_contrast|Blur contrast|float:0.5:2.0:0.05|backdrop contrast
+blur_brightness|Blur brightness|float:0.5:1.5:0.05|backdrop brightness
 glow|Glow|float:0.0:1.0:0.05|shadow bloom
 anim_speed|Anim speed|int:1:12:1|duration (higher = slower)
 anim_style|Anim style|choice|slide,popin,fade
@@ -1162,9 +1172,12 @@ randomise_feel() {
   local oa; oa="$(_rfloat 0.85 1.0)"
   set_override opacity_active   "$oa"
   set_override opacity_inactive "$(awk -v a="$oa" -v d="$(_rfloat 0.04 0.15)" 'BEGIN{v=a-d; if(v<0.6)v=0.6; printf "%.2f", v}')"
-  set_override blur_size     "$(_rint 3 12)"
-  set_override blur_passes   "$(_rint 1 3)"
+  set_override blur_size     "$(_rint 4 12)"
+  set_override blur_passes   "$(_rint 2 4)"
   set_override blur_vibrancy "$(_rfloat 0.05 0.50)"
+  set_override blur_noise    "$(_rfloat 0.01 0.04)"
+  set_override blur_contrast "$(_rfloat 0.90 1.15)"
+  set_override blur_brightness "$(_rfloat 0.85 1.10)"
   set_override glow          "$(_rfloat 0.00 0.60)"
   set_override anim_speed    "$(_rint 3 8)"
   set_override anim_style    "$(_rpick slide popin fade)"
