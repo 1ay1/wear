@@ -28,7 +28,7 @@ CATEGORY_ICONS = {
     "Feel": "weather-clear-symbolic",
     "Bar": "view-dual-symbolic",
     "Type": "font-x-generic-symbolic",
-    "Engines": "applications-system-symbolic",
+    "System": "applications-system-symbolic",
 }
 
 # Inside the single Colours page, split rows into titled groups for scanning.

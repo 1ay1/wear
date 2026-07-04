@@ -484,14 +484,11 @@ font_mono|Mono font|font|terminal
 font_size_ui|UI font size|int:9:20:1|pt
 font_size_term|Term font size|float:8:20:0.5|pt
 font_weight|Font weight|choice|normal,bold
-## Engines
+## System
 mode|Dark / light|choice|dark,light
-gtk_theme|GTK theme|pick:gtk_theme|widget theme for GTK apps
 icon_theme|Icon theme|pick:icon_theme|app + folder icons
 cursor_theme|Cursor theme|pick:cursor_theme|pointer
 cursor_size|Cursor size|int:16:48:2|px
-qt_style|Qt style|pick:qt_style|widget engine for Qt apps
-kvantum_theme|Kvantum theme|pick:kvantum_theme|when Qt style = kvantum
 wallpaper_shader|Wallpaper shader|pick:wallpaper_shader|neowall GPU shader
 SCHEMA
 }

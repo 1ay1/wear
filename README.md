@@ -74,7 +74,7 @@ reloads the running apps.
 
 Want to nudge one thing without designing a whole theme? Hit **Super+A** (or run
 `wear tweak`) to open a native **GTK4 / libadwaita** editor: a sidebar of
-categories — **Colours · Shape · Feel · Bar · Type · Engines** — with real
+categories — **Colours · Shape · Feel · Bar · Type · System** — with real
 sliders, colour pickers, dropdowns and font choosers. Every change applies
 **instantly** to the whole desktop (it edits on top of the active theme). The
 header bar has a base-theme switcher, a randomise-accents shuffle, and **Save
@@ -90,10 +90,16 @@ It covers **everything** — all ~60 properties:
   speed & style, terminal opacity & padding.
 - **Bar** — position, height, margin, spacing, radius.
 - **Type** — UI & mono fonts, sizes, weight.
-- **Engines** — dark/light mode, **GTK theme**, **icon theme**, **cursor theme
-  & size**, **Qt style** (Fusion/kvantum), **Kvantum theme**, and the
-  **wallpaper shader** — all discovered from what's actually installed on your
-  system (searchable dropdowns).
+- **System** — dark/light mode, **icon theme**, **cursor theme & size**, and
+  the **wallpaper shader** — discovered from what's actually installed
+  (searchable dropdowns).
+
+**Widget engines are invisible plumbing.** GTK apps sit on a neutral base
+(adw-gtk3/Adwaita, auto light/dark) and Qt apps on Fusion — both fully
+recoloured from your palette. There are no GTK-theme/Qt-style/Kvantum pickers
+in the UI because prebuilt themes carry baked-in colours that would fight the
+palette. (Power users can still force one: `wear set gtk_theme <name>`,
+`wear set qt_style kvantum`, `wear set kvantum_theme <name>`.)
 
 **One palette drives every engine.** You never recolour GTK or Qt yourself:
 the default `gtk_theme="auto"` sits GTK on a neutral base (adw-gtk3, or stock
