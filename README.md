@@ -70,6 +70,34 @@ reloads the running apps.
 | `nord` | minimal calm — thin, huge gaps, slow gentle fades |
 | `rose-pine` | elegant — large pill rounding, graceful pop-in |
 
+### 🎛️ Live appearance tweaker
+
+Want to nudge one thing without designing a whole theme? The tweaker edits any
+single property **on top of** the active theme and applies it instantly.
+
+```sh
+wear tweak            # rofi UI (also bound to Super+A)
+wear set radius 20    # bump window rounding, live
+wear set accent ff8800
+wear set gap_out 24
+wear tweaks           # show your active tweaks
+wear unset radius     # drop one tweak
+wear reset            # clear all tweaks, back to the pure theme
+wear save my-look     # snapshot the current look as a new theme
+```
+
+The rofi UI groups every editable property — **Colours** (accent/bg/fg + the 8
+ANSI colours, with an eyedropper via `hyprpicker` and palette presets),
+**Shape** (radius, borders, gaps), **Feel** (opacity, blur, glow, animation
+speed/style, tiling layout), **Bar** (position/height/margin) and **Type**
+(UI & mono fonts from `fc-list`, sizes, weight, cursor size). Numbers get a
+`+ / −` stepper, choices a pick-list, colours a swatch strip. Every change
+re-renders the whole desktop live. A `•` marks properties you've overridden;
+**Save as new theme** bakes your tweaks into `themes/<name>.theme`.
+
+Tweaks live in `~/.config/phosphor/overrides.conf` and are cleared when you
+switch to a different base theme (unless you save them first).
+
 ### Add your own
 
 A theme is a single flat file. Copy one and edit the ~26 colour keys:
@@ -77,7 +105,7 @@ A theme is a single flat file. Copy one and edit the ~26 colour keys:
 ```sh
 cp themes/nord.theme themes/my-theme.theme
 $EDITOR themes/my-theme.theme      # hex values, no leading '#'
-theme my-theme
+wear my-theme
 ```
 
 Every colour-bearing config is a `*.tmpl` template with `{{key}}` placeholders

@@ -36,7 +36,8 @@ fi
 
 CFG="$HOME/.config"
 THEMES_DIR="$REPO/themes"
-STATE="$CFG/phosphor/theme"     # remembers the active theme name
+STATE="$CFG/phosphor/theme"       # remembers the active base theme name
+OVERRIDES="$CFG/phosphor/overrides.conf"  # per-key live tweaks on top of base
 
 GREEN='\033[0;32m'; BOLD='\033[1m'; DIM='\033[2m'; RED='\033[0;31m'; NC='\033[0m'
 say()  { echo -e "${GREEN}${BOLD}::${NC} $*"; }
@@ -105,6 +106,30 @@ load_palette() {
   local k
   for k in "${keys[@]}"; do PAL[$k]="${!k}"; done
 
+  # --- overlay live per-key tweaks from OVERRIDES (the tweaker writes these) ---
+  # Each line is  key=value  (unquoted). Colour keys are 6 hex digits (no #).
+  # These win over the base theme so users can nudge any single property live.
+  if [ -f "$OVERRIDES" ]; then
+    local oline okey oval
+    while IFS= read -r oline || [ -n "$oline" ]; do
+      case "$oline" in ''|\#*) continue ;; esac
+      okey="${oline%%=*}"; oval="${oline#*=}"
+      okey="${okey// /}"                       # trim spaces around the key
+      oval="${oval%\"}"; oval="${oval#\"}"      # strip optional wrapping quotes
+      [ -z "$okey" ] && continue
+      PAL[$okey]="$oval"
+      # engine/meta keys also flow through the shell vars used below
+      case "$okey" in
+        name)             name="$oval" ;;
+        mode)             mode="$oval" ;;
+        gtk_theme)        gtk_theme="$oval" ;;
+        icon_theme)       icon_theme="$oval" ;;
+        cursor_theme)     cursor_theme="$oval" ;;
+        wallpaper_shader) wallpaper_shader="$oval" ;;
+      esac
+    done < "$OVERRIDES"
+  fi
+
   # sensible fallbacks for older palette files that lack structure keys
   : "${PAL[radius]:=8}";           : "${PAL[border_width]:=2}"
   : "${PAL[gap_in]:=6}";           : "${PAL[gap_out]:=14}"
@@ -143,7 +168,11 @@ load_palette() {
 
 # --- apply everything -------------------------------------------------------
 apply_theme() {
-  local slug="$1"
+  local slug="$1" keep_overrides="${2:-}"
+  # Switching to a NEW base theme wipes live tweaks unless caller says keep.
+  if [ "$keep_overrides" != "keep" ] && [ "$slug" != "$(current_theme)" ]; then
+    : > "$OVERRIDES" 2>/dev/null || true
+  fi
   load_palette "$slug"
   say "Switching to ${BOLD}${THEME_DISPLAY}${NC}"
 
@@ -265,6 +294,113 @@ reload_apps() {
   info "reloaded kitty · hyprland · dunst · waybar"
 }
 
+# ============================================================================
+#  APPEARANCE TWEAKER  —  live per-property editing on top of the base theme
+# ============================================================================
+
+# Persist a single override then re-apply the current base with tweaks kept.
+set_override() {   # $1=key  $2=value
+  local key="$1" val="$2"
+  mkdir -p "$(dirname "$OVERRIDES")"; touch "$OVERRIDES"
+  # drop any existing line for this key, then append the new one
+  grep -vE "^[[:space:]]*${key}=" "$OVERRIDES" > "$OVERRIDES.tmp" 2>/dev/null || true
+  mv "$OVERRIDES.tmp" "$OVERRIDES"
+  printf '%s=%s\n' "$key" "$val" >> "$OVERRIDES"
+}
+
+unset_override() { # $1=key
+  [ -f "$OVERRIDES" ] || return 0
+  grep -vE "^[[:space:]]*${1}=" "$OVERRIDES" > "$OVERRIDES.tmp" 2>/dev/null || true
+  mv "$OVERRIDES.tmp" "$OVERRIDES"
+}
+
+# current effective value of a key (override wins, else base theme, else "")
+eff_value() {   # $1=key
+  load_palette "$(current_theme)" >/dev/null 2>&1
+  printf '%s' "${PAL[$1]:-}"
+}
+
+# Snapshot the *effective* palette (base + overrides) into a new .theme file.
+save_theme() {  # $1=new slug
+  local slug="$1"
+  [ -z "$slug" ] && { warn "usage: wear save <name>"; return 1; }
+  slug="$(echo "$slug" | tr ' ' '-' | tr -cd '[:alnum:]._-')"
+  local out="$THEMES_DIR/$slug.theme"
+  load_palette "$(current_theme)" >/dev/null 2>&1
+  {
+    echo "# $slug — saved by \`wear save\` on $(date '+%Y-%m-%d %H:%M')"
+    echo "name=\"${PAL[name]:-$slug}\""
+    echo "mode=\"${THEME_MODE}\""
+    local k
+    for k in bg bg_alt bg_dim surface overlay fg fg_dim fg_faint \
+             accent accent2 accent3 red green yellow blue magenta cyan \
+             br_black br_red br_green br_yellow br_blue br_magenta br_cyan br_white \
+             on_accent radius border_width gap_in gap_out layout \
+             opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow \
+             anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
+             bar_spacing bar_radius font_ui font_mono font_size_ui font_size_term \
+             font_weight term_opacity term_padding cursor_size qt_style kvantum_theme; do
+      printf '%s="%s"\n' "$k" "${PAL[$k]:-}"
+    done
+    echo "gtk_theme=\"${GTK_THEME_NAME}\""
+    echo "icon_theme=\"${ICON_THEME}\""
+    echo "cursor_theme=\"${CURSOR_THEME}\""
+    echo "wallpaper_shader=\"${WALL_SHADER}\""
+  } > "$out"
+  say "saved theme -> ${BOLD}$slug${NC}  ($out)"
+  echo "$slug" > "$STATE"; : > "$OVERRIDES"
+  info "now the active base theme (overrides cleared)"
+}
+
+# Editable-property schema.  Format per line:
+#   key|Label|type|spec
+# type: color | int:min:max:step | float:min:max:step | choice | font
+# spec: for choice, a comma list; for others, a hint string.
+tweak_schema() {
+  cat <<'SCHEMA'
+## Colours
+accent|Accent|color|primary highlight
+accent2|Accent 2|color|secondary
+accent3|Accent 3|color|tertiary
+bg|Background|color|main bg
+surface|Surface|color|cards/panels
+fg|Foreground|color|main text
+red|Red|color|
+green|Green|color|
+yellow|Yellow|color|
+blue|Blue|color|
+magenta|Magenta|color|
+cyan|Cyan|color|
+## Shape
+radius|Corner radius|int:0:30:2|window rounding px
+border_width|Border width|int:0:8:1|px
+gap_in|Inner gap|int:0:30:2|px between windows
+gap_out|Outer gap|int:0:40:2|px to screen edge
+bar_radius|Bar radius|int:0:24:2|waybar corner px
+## Feel
+opacity_active|Active opacity|float:0.5:1.0:0.02|focused window
+opacity_inactive|Inactive opacity|float:0.4:1.0:0.02|unfocused window
+blur_size|Blur size|int:0:20:1|
+blur_passes|Blur passes|int:0:5:1|
+glow|Glow|float:0.0:1.0:0.05|shadow bloom
+anim_speed|Anim speed|int:1:12:1|lower = faster
+anim_style|Anim style|choice|slide,popin,fade
+layout|Tiling layout|choice|dwindle,master
+## Bar
+bar_position|Bar position|choice|top,bottom
+bar_height|Bar height|int:20:56:2|px
+bar_margin|Bar margin|int:0:24:2|px
+## Type
+font_ui|UI font|font|panel/menus
+font_mono|Mono font|font|terminal
+font_size_ui|UI font size|int:9:20:1|pt
+font_size_term|Term font size|float:8:20:0.5|pt
+font_weight|Font weight|choice|normal,bold
+term_opacity|Term opacity|float:0.5:1.0:0.02|kitty bg
+cursor_size|Cursor size|int:16:48:2|px
+SCHEMA
+}
+
 # --- interactive picker -----------------------------------------------------
 # glyph per theme (falls back to a generic palette icon)
 theme_glyph() {
@@ -328,14 +464,227 @@ pick() {
   fi
 }
 
+# ============================================================================
+#  TWEAKER UI  (rofi)  —  `wear tweak`
+# ============================================================================
+
+# small rofi wrapper: $1=prompt  $2=mesg ; rows on stdin ; prints selection
+_rofi() {
+  local prompt="$1" mesg="$2"
+  rofi -dmenu -i -markup-rows -config /dev/null \
+       -theme "$CFG/rofi/theme-picker.rasi" \
+       -p "$prompt" -mesg "$mesg" 2>/dev/null
+}
+
+# re-render everything, keeping overrides, for an instant live preview
+preview() { apply_theme "$(current_theme)" keep >/dev/null 2>&1; }
+
+# swatch markup for a hex value (no #)
+_sw() { printf "<span foreground='#%s'>\u2588\u2588\u2588</span>" "$1"; }
+
+# Edit a COLOUR key. Offers hyprpicker (eyedropper), a hex prompt, or presets.
+edit_color() { # $1=key $2=label
+  local key="$1" label="$2" cur; cur="$(eff_value "$key")"
+  local rows=""
+  rows+="$(_sw "$cur")  current: <b>#$cur</b>\n"
+  command -v hyprpicker >/dev/null 2>&1 && rows+="\ueb28  Pick from screen (eyedropper)\n"
+  rows+="\uf040  Type a hex value…\n"
+  # a strip of palette colours from the current theme as quick presets
+  local pk; for pk in accent accent2 accent3 red green yellow blue magenta cyan fg bg; do
+    local pv; pv="$(eff_value "$pk")"
+    [ -n "$pv" ] && rows+="$(_sw "$pv")  use $pk (#$pv)\n"
+  done
+  rows+="\u21ba  reset $key to theme default"
+  local sel; sel="$(printf '%b' "$rows" | _rofi "$label" "pick a colour for $label")" || return 0
+  [ -z "$sel" ] && return 0
+  local newv=""
+  case "$sel" in
+    *eyedropper*)
+      newv="$(hyprpicker -a -f hex 2>/dev/null | tr -d '#\n')" ;;
+    *Type\ a\ hex*)
+      newv="$(printf '' | _rofi "#hex" "enter 6 hex digits, e.g. ff8800")"
+      newv="${newv#\#}" ;;
+    *reset*)
+      unset_override "$key"; preview; return 0 ;;
+    use\ *)
+      local src; src="$(echo "$sel" | sed -E 's/.*use ([a-z0-9_]+).*/\1/')"
+      newv="$(eff_value "$src")" ;;
+    *) return 0 ;;
+  esac
+  newv="$(echo "$newv" | tr '[:upper:]' '[:lower:]' | tr -cd '[:xdigit:]')"
+  [[ "$newv" =~ ^[0-9a-f]{6}$ ]] || { warn "not a 6-digit hex: $newv"; return 0; }
+  set_override "$key" "$newv"; preview
+}
+
+# Edit a NUMERIC key with a +/- stepper (and a type-exact option).
+edit_number() { # $1=key $2=label $3=min $4=max $5=step $6=isfloat(0/1)
+  local key="$1" label="$2" min="$3" max="$4" step="$5" isf="$6"
+  while :; do
+    local cur; cur="$(eff_value "$key")"
+    local rows=""
+    rows+="current: <b>$cur</b>   <span size='small'>($min–$max)</span>\n"
+    rows+="\uf077  + $step\n"
+    rows+="\uf078  − $step\n"
+    rows+="\uf055  max ($max)\n"
+    rows+="\uf056  min ($min)\n"
+    rows+="\uf040  type exact value…\n"
+    rows+="\u21ba  reset to theme default\n"
+    rows+="\uf00c  done"
+    local sel; sel="$(printf '%b' "$rows" | _rofi "$label" "adjust $label · Esc to go back")" || return 0
+    [ -z "$sel" ] && return 0
+    local nv="$cur"
+    case "$sel" in
+      *"+ "*)  nv="$(awk -v c="$cur" -v s="$step" -v m="$max" 'BEGIN{v=c+s; if(v>m)v=m; print v}')" ;;
+      *"− "*)  nv="$(awk -v c="$cur" -v s="$step" -v m="$min" 'BEGIN{v=c-s; if(v<m)v=m; print v}')" ;;
+      *max*)   nv="$max" ;;
+      *min*)   nv="$min" ;;
+      *type*)  nv="$(printf '' | _rofi "$label=" "enter a number between $min and $max")" ;;
+      *reset*) unset_override "$key"; preview; continue ;;
+      *done*)  return 0 ;;
+      *) return 0 ;;
+    esac
+    [ -z "$nv" ] && continue
+    # integers: strip decimals
+    [ "$isf" = "0" ] && nv="$(awk -v v="$nv" 'BEGIN{printf "%d", v}')"
+    set_override "$key" "$nv"; preview
+  done
+}
+
+# Edit a CHOICE key from a fixed comma list.
+edit_choice() { # $1=key $2=label $3=csv
+  local key="$1" label="$2" csv="$3" cur; cur="$(eff_value "$key")"
+  local rows="" opt
+  local IFS=,; for opt in $csv; do
+    local mark=""; [ "$opt" = "$cur" ] && mark="  ●"
+    rows+="$opt$mark\n"
+  done
+  rows+="\u21ba  reset to theme default"
+  local sel; sel="$(printf '%b' "$rows" | _rofi "$label" "choose $label (current: $cur)")" || return 0
+  [ -z "$sel" ] && return 0
+  case "$sel" in
+    *reset*) unset_override "$key"; preview; return 0 ;;
+    *) set_override "$key" "$(echo "$sel" | sed 's/  ●$//' | tr -d ' ')"; preview ;;
+  esac
+}
+
+# Edit a FONT key from fontconfig families.
+edit_font() { # $1=key $2=label
+  local key="$1" label="$2" cur; cur="$(eff_value "$key")"
+  local list
+  if command -v fc-list >/dev/null 2>&1; then
+    list="$(fc-list : family | sed 's/,.*//' | sort -u)"
+  else
+    list=$'JetBrainsMono Nerd Font\nInter\nCantarell\nNoto Sans\nFira Code'
+  fi
+  local sel; sel="$(printf 'current: %s\n%s' "$cur" "$list" | _rofi "$label" "pick a font family")" || return 0
+  [ -z "$sel" ] && return 0
+  case "$sel" in current:*) return 0 ;; esac
+  set_override "$key" "$sel"; preview
+}
+
+# Dispatch to the right editor based on the schema type.
+edit_prop() { # $1=key $2=label $3=type $4=spec
+  case "$3" in
+    color)  edit_color  "$1" "$2" ;;
+    int:*)  local a; IFS=: read -r _ mn mx st <<<"$3"; edit_number "$1" "$2" "$mn" "$mx" "$st" 0 ;;
+    float:*) IFS=: read -r _ mn mx st <<<"$3"; edit_number "$1" "$2" "$mn" "$mx" "$st" 1 ;;
+    choice) edit_choice "$1" "$2" "$4" ;;
+    font)   edit_font   "$1" "$2" ;;
+  esac
+}
+
+# Randomise the three accent colours (fun, instant).
+randomise_accents() {
+  local a; for a in accent accent2 accent3; do
+    set_override "$a" "$(printf '%02x%02x%02x' $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256)))"
+  done
+  preview
+}
+
+# Main tweaker menu: flat list of every editable property + actions.
+tweak() {
+  if ! { [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ] && command -v rofi >/dev/null 2>&1; }; then
+    warn "the tweaker needs rofi in a graphical session"; return 1
+  fi
+  local cur_theme; cur_theme="$(current_theme)"
+  while :; do
+    load_palette "$cur_theme" >/dev/null 2>&1
+    local rows="" line key label type spec
+    # header actions
+    rows+="\uf043  <b>Base theme</b>: $(pretty_name "$cur_theme")\t@base\n"
+    rows+="\uf5aa  <b>Random accents</b> \uf522\t@random\n"
+    rows+="\uf0c7  <b>Save as new theme…</b>\t@save\n"
+    local ntweaks=0; [ -f "$OVERRIDES" ] && ntweaks=$(grep -cvE '^\s*(#|$)' "$OVERRIDES" 2>/dev/null || echo 0)
+    rows+="\u21ba  <b>Reset all tweaks</b>  <span size='small'>($ntweaks active)</span>\t@reset\n"
+    # every schema property, grouped by ## headers
+    while IFS= read -r line; do
+      case "$line" in
+        '##'*) rows+="<span size='small' weight='bold'>── ${line#\#\# } ──</span>\t@sep\n"; continue ;;
+        '') continue ;;
+      esac
+      IFS='|' read -r key label type spec <<<"$line"
+      local val; val="${PAL[$key]:-}"; local badge=""
+      # show swatch for colours, plain value otherwise; * marks an override
+      grep -qE "^\s*${key}=" "$OVERRIDES" 2>/dev/null && badge=" <span foreground='#$(eff_value accent)'>•</span>"
+      if [ "$type" = color ]; then
+        rows+="$(_sw "$val")  $label  <span size='small'>#$val</span>$badge\t$key|$label|$type|$spec\n"
+      else
+        rows+="\u2003 $label  <b>$val</b>$badge\t$key|$label|$type|$spec\n"
+      fi
+    done < <(tweak_schema)
+
+    local sel; sel="$(printf '%b' "$rows" | rofi -dmenu -i -markup-rows -config /dev/null \
+        -theme "$CFG/rofi/theme-picker.rasi" -p 'tweak' \
+        -mesg 'live appearance · changes apply instantly · Esc to exit' \
+        -display-columns 1 -format 's')" || return 0
+    [ -z "$sel" ] && return 0
+    # the payload is after the last tab
+    local payload="${sel##*	}"
+    case "$payload" in
+      @sep)   continue ;;
+      @base)  local t; mapfile -t _ts < <(list_themes)
+              t="$(printf '%s\n' "${_ts[@]}" | _rofi 'base theme' 'switch base (clears tweaks)')"
+              [ -n "$t" ] && [ -f "$THEMES_DIR/$t.theme" ] && { apply_theme "$t" >/dev/null 2>&1; cur_theme="$t"; } ;;
+      @random) randomise_accents ;;
+      @save)  local nm; nm="$(printf '' | _rofi 'save as' 'name for the new theme')"
+              [ -n "$nm" ] && { save_theme "$nm"; cur_theme="$(current_theme)"; } ;;
+      @reset) : > "$OVERRIDES"; preview ;;
+      *|*)    IFS='|' read -r key label type spec <<<"$payload"
+              [ -n "$key" ] && edit_prop "$key" "$label" "$type" "$spec" ;;
+    esac
+  done
+}
+
 # --- main -------------------------------------------------------------------
 case "${1:-}" in
   ""|pick|menu)      pick ;;
   list|ls)           list_themes ;;
   current|active)    current_theme ;;
-  reload|re)         apply_theme "$(current_theme)" ;;
+  reload|re)         apply_theme "$(current_theme)" keep ;;
+  tweak|edit|ui|t)   tweak ;;
+  set)               # wear set <key> <value...>
+    shift; key="${1:-}"; shift || true; val="$*"
+    [ -z "$key" ] && { warn "usage: wear set <key> <value>"; exit 1; }
+    set_override "$key" "$val"; apply_theme "$(current_theme)" keep ;;
+  unset)             # wear unset <key>
+    shift; [ -z "${1:-}" ] && { warn "usage: wear unset <key>"; exit 1; }
+    unset_override "$1"; apply_theme "$(current_theme)" keep ;;
+  reset)             # wipe all live tweaks, back to the pure base theme
+    : > "$OVERRIDES"; apply_theme "$(current_theme)" keep
+    say "tweaks cleared — back to pure $(pretty_name "$(current_theme)")" ;;
+  save)              shift; save_theme "${1:-}" ;;
+  tweaks|diff)       # show the active overrides
+    if [ -s "$OVERRIDES" ]; then cat "$OVERRIDES"; else echo "(no tweaks — pure $(current_theme))"; fi ;;
   -h|--help|help)
-    sed -n '2,20p' "$SELF" | sed 's/^# \{0,1\}//' ;;
+    sed -n '2,20p' "$SELF" | sed 's/^# \{0,1\}//'
+    echo
+    echo "Tweaker:"
+    echo "  wear tweak            live appearance editor (rofi UI)"
+    echo "  wear set <k> <v>      set one property live (e.g. wear set radius 20)"
+    echo "  wear unset <k>        drop one tweak"
+    echo "  wear tweaks           show active tweaks"
+    echo "  wear reset            clear all tweaks"
+    echo "  wear save <name>      snapshot current look as a new theme" ;;
   *)
     if [ -f "$THEMES_DIR/$1.theme" ]; then apply_theme "$1"
     else warn "no such theme: $1"; echo; echo "Available:"; list_themes; exit 1; fi ;;
