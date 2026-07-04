@@ -1,33 +1,35 @@
 /* {{THEME_NAME}} — theme picker for `theme`. Rendered by the switcher. */
 configuration {
     show-icons: false;
-    display-drun: "";
 }
 
 * {
-    bg:      #{{bg}};
-    bg-alt:  #{{bg_alt}};
-    fg:      #{{fg}};
-    fg-dim:  #{{fg_dim}};
-    accent:  #{{accent}};
+    bg:        #{{bg}};
+    bg-alt:    #{{bg_alt}};
+    bg-dim:    #{{bg_dim}};
+    fg:        #{{fg}};
+    fg-dim:    #{{fg_dim}};
+    accent:    #{{accent}};
+    accent2:   #{{accent2}};
     on-accent: #{{on_accent}};
-    surface: #{{surface}};
+    surface:   #{{surface}};
 
     background-color: transparent;
     text-color:       @fg;
-    font: "JetBrainsMono Nerd Font 13";
+    font: "JetBrainsMono Nerd Font 12";
 }
 
 window {
-    transparency: "real";
+    transparency:     "real";
     background-color: @bg;
-    border:          2px;
-    border-color:    @accent;
-    border-radius:   14px;
-    width:           440px;
-    location:        center;
-    anchor:          center;
-    padding:         0;
+    border:           2px;
+    border-color:     @accent;
+    border-radius:    16px;
+    width:            460px;
+    location:         center;
+    anchor:           center;
+    padding:          0;
+    children:         [ mainbox ];
 }
 
 mainbox {
@@ -36,68 +38,88 @@ mainbox {
     children: [ inputbar, message, listview ];
 }
 
+/* ── header / search bar ─────────────────────────────────────────────── */
 inputbar {
-    background-color: @bg-alt;
-    border-radius:    14px 14px 0 0;
-    padding:          16px 20px;
-    spacing:          10px;
+    background-color: @bg-dim;
+    border:           0 0 2px 0;
+    border-color:     @accent;
+    border-radius:    16px 16px 0 0;
+    padding:          18px 22px;
+    spacing:          12px;
     children:         [ prompt, entry ];
 }
 
 prompt {
-    text-color: @accent;
-    str:        "󰏘 theme";
+    text-color:  @accent;
+    font:        "JetBrainsMono Nerd Font Bold 13";
+    str:         "󰏘  themes";
+    vertical-align: 0.5;
 }
 
 entry {
-    placeholder:       "type to filter…";
+    placeholder:       "filter…";
     placeholder-color: @fg-dim;
+    text-color:        @fg;
     cursor:            text;
     cursor-color:      @accent;
+    vertical-align:    0.5;
 }
 
+/* ── active-theme hint line ──────────────────────────────────────────── */
 message {
-    background-color: transparent;
-    padding:          8px 20px 0 20px;
+    background-color: @bg-dim;
+    border:           0 0 1px 0;
+    border-color:     @surface;
+    padding:          8px 22px 10px 22px;
 }
 textbox {
     text-color: @fg-dim;
-    font:       "JetBrainsMono Nerd Font 10";
+    font:       "JetBrainsMono Nerd Font Italic 10";
 }
 
+/* ── theme list ──────────────────────────────────────────────────────── */
 listview {
-    lines:        7;
-    columns:      1;
-    spacing:      2px;
-    scrollbar:    false;
-    cycle:        true;
-    dynamic:      true;
-    padding:      12px;
+    lines:            8;
+    columns:          1;
+    spacing:          4px;
+    scrollbar:        false;
+    cycle:            true;
+    dynamic:          true;
+    padding:          14px;
     background-color: transparent;
 }
 
 element {
-    padding:       10px 16px;
-    border-radius: 8px;
-    spacing:       10px;
-    background-color: transparent;
-    text-color:    @fg;
+    padding:          11px 16px;
+    border-radius:    10px;
+    spacing:          12px;
+    background-color: @bg-alt;
+    text-color:       @fg;
 }
 
 element normal.normal,
 element alternate.normal {
-    background-color: transparent;
+    background-color: @bg-alt;
     text-color:       @fg;
+}
+
+element normal.active,
+element alternate.active {
+    background-color: @bg-alt;
+    text-color:       @accent2;
 }
 
 element selected.normal,
 element selected.active {
     background-color: @accent;
     text-color:       @on-accent;
+    border:           0 0 0 4px;
+    border-color:     @accent2;
 }
 
 element-text {
     background-color: transparent;
     text-color:       inherit;
     vertical-align:   0.5;
+    highlight:        bold;
 }

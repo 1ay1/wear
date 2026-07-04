@@ -203,38 +203,66 @@ reload_apps() {
 }
 
 # --- interactive picker -----------------------------------------------------
+# glyph per theme (falls back to a generic palette icon)
+theme_glyph() {
+  case "$1" in
+    phosphor)          echo "" ;;   # leaf / CRT green
+    tokyo-night)       echo "󱑍" ;;   # moon
+    gruvbox)           echo "󱄄" ;;   # sun / warm
+    catppuccin-mocha)  echo "󱋼" ;;   # coffee
+    catppuccin-latte)  echo "󱋿" ;;   # coffee (light)
+    nord)              echo "" ;;   # snowflake
+    rose-pine)         echo "󰼎" ;;   # flower
+    *)                 echo "󰌷" ;;   # palette
+  esac
+}
+
 pick() {
-  local themes names slug
+  local themes slug
   mapfile -t themes < <(list_themes)
-  # Build "Display Name" list mapped back to slugs
-  local menu="" cur; cur="$(current_theme)"
+  local cur; cur="$(current_theme)"
+  # Build pango-markup rows: <glyph>  Name   [● active]  + a coloured swatch.
+  # Column 2 (tab-separated) carries the slug for reverse mapping.
+  local menu="" slug disp glyph acc dot
   for slug in "${themes[@]}"; do
-    local disp; disp="$(pretty_name "$slug")"
-    [ "$slug" = "$cur" ] && disp="$disp  ●"
-    menu+="$disp\t$slug\n"
+    disp="$(pretty_name "$slug")"
+    glyph="$(theme_glyph "$slug")"
+    acc="#$( set -a; . "$THEMES_DIR/$slug.theme"; echo "${accent}" )"
+    dot=""
+    [ "$slug" = "$cur" ] && dot="   <span foreground='$acc'>● active</span>"
+    # █ swatch tinted with the theme accent, then glyph + name
+    menu+="<span foreground='$acc'>██</span>  $glyph  <b>$disp</b>$dot\t$slug\n"
   done
+
   local chosen=""
   local picker="$CFG/rofi/theme-picker.rasi"
   if [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ] && command -v rofi >/dev/null 2>&1 && [ -f "$picker" ]; then
-    # -config /dev/null so we DON'T inherit the combi launcher's fullscreen layout
-    chosen="$(printf '%b' "$menu" | cut -f1 | \
-      rofi -dmenu -i -config /dev/null -theme "$picker" \
-           -mesg "active: $(pretty_name "$cur")")" || return 0
+    # -config /dev/null so we DON'T inherit the combi launcher's fullscreen layout.
+    # -markup-rows renders the pango spans; select by the hidden slug column.
+    chosen="$(printf '%b' "$menu" | \
+      rofi -dmenu -i -markup-rows -config /dev/null -theme "$picker" \
+           -display-columns 1 -mesg "switch the whole desktop · Enter to apply" \
+           -format 'd')" || return 0
+    # -format 'd' returns the 1-based index of the selection
+    [ -z "$chosen" ] && return 0
+    [ "$chosen" -ge 1 ] 2>/dev/null && { apply_theme "${themes[$((chosen-1))]}"; return; }
+    return 0
   elif command -v fzf >/dev/null 2>&1; then
-    chosen="$(printf '%b' "$menu" | cut -f1 | fzf --prompt='theme> ')" || return 0
+    local sel; sel="$(printf '%s\n' "${themes[@]}" | \
+      fzf --prompt='theme> ' --with-nth=1 \
+          --preview 'sed -n "1,3p" '"$THEMES_DIR"'/{}.theme')" || return 0
+    [ -n "$sel" ] && apply_theme "$sel"
+    return 0
   else
     echo "Available themes:"; local i=1
-    for slug in "${themes[@]}"; do echo "  $i) $(pretty_name "$slug")"; i=$((i+1)); done
+    for slug in "${themes[@]}"; do
+      local mark=""; [ "$slug" = "$cur" ] && mark="  (active)"
+      echo "  $i) $(pretty_name "$slug")$mark"; i=$((i+1))
+    done
     read -rp "pick #: " n
-    chosen="$(pretty_name "${themes[$((n-1))]}")"
+    [ "$n" -ge 1 ] 2>/dev/null && apply_theme "${themes[$((n-1))]}"
+    return 0
   fi
-  [ -z "$chosen" ] && return 0
-  chosen="${chosen%%  ●}"   # strip active marker
-  # map display name back to slug
-  for slug in "${themes[@]}"; do
-    [ "$(pretty_name "$slug")" = "$chosen" ] && { apply_theme "$slug"; return; }
-  done
-  warn "unknown selection: $chosen"
 }
 
 # --- main -------------------------------------------------------------------
