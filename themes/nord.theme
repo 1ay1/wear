@@ -35,7 +35,7 @@ br_white="eceff4"
 
 on_accent="2e3440"
 
-gtk_theme="catppuccin-mocha-sapphire-standard+default"
+gtk_theme="auto"
 icon_theme="Papirus-Dark"
 cursor_theme="Bibata-Modern-Amber"
 

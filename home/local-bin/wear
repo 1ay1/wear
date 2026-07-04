@@ -68,6 +68,7 @@ hex_to_rgb() {
 list_options() { # $1 = kind
   case "$1" in
     gtk_theme)
+      echo "auto"   # neutral base (adw-gtk3) recoloured by the generated gtk.css
       { ls /usr/share/themes "$HOME/.themes" "$HOME/.local/share/themes" 2>/dev/null; } \
         | grep -vE 'hdpi$|xhdpi$' | sort -u ;;
     icon_theme)
@@ -186,6 +187,22 @@ load_palette() {
   local g="${PAL[glow]}"
   PAL[glow_alpha]="$(awk -v g="$g" 'BEGIN{printf "%02x", int(g*255)}')"
   PAL[glow_px]="$(awk -v g="$g" 'BEGIN{printf "%d", int(g*24)+2}')"
+
+  # derived shades — computed mixes so widget hover/pressed states follow the
+  # palette automatically (no extra keys for the user to define).
+  #   mix(a,b,f) = a*(1-f) + b*f   per channel
+  _mix() { awk -v a="$1" -v b="$2" -v f="$3" 'BEGIN{
+    ar=strtonum("0x" substr(a,1,2)); ag=strtonum("0x" substr(a,3,2)); ab=strtonum("0x" substr(a,5,2))
+    br=strtonum("0x" substr(b,1,2)); bg=strtonum("0x" substr(b,3,2)); bb=strtonum("0x" substr(b,5,2))
+    printf "%02x%02x%02x", ar+(br-ar)*f, ag+(bg-ag)*f, ab+(bb-ab)*f }'
+  }
+  PAL[accent_hover]="$(_mix "${PAL[accent]}" "ffffff" 0.15)"   # accent, lightened
+  PAL[accent_active]="$(_mix "${PAL[accent]}" "000000" 0.20)"  # accent, pressed
+  PAL[accent_dim]="$(_mix "${PAL[accent]}" "${PAL[bg]}" 0.60)" # washed accent
+  PAL[bg_hover]="$(_mix "${PAL[bg]}" "${PAL[fg]}" 0.07)"       # subtle row hover
+  PAL[surface_hover]="$(_mix "${PAL[surface]}" "${PAL[fg]}" 0.10)"
+  PAL[border_dim]="$(_mix "${PAL[overlay]}" "${PAL[bg]}" 0.40)"
+
   # window animations only accept slide/popin — map fade to a safe default
   case "${PAL[anim_style]}" in
     fade|"") PAL[win_style]="slide" ;;
@@ -193,13 +210,26 @@ load_palette() {
   esac
   THEME_DISPLAY="${name:-$slug}"
   THEME_MODE="${mode:-dark}"
-  GTK_THEME_NAME="${gtk_theme:-}"
+  GTK_THEME_NAME="${gtk_theme:-auto}"
+  # "auto" = neutral base theme fully recoloured by our generated gtk.css.
+  # adw-gtk3 is designed for exactly this; fall back to stock Adwaita.
+  if [ "$GTK_THEME_NAME" = "auto" ] || [ -z "$GTK_THEME_NAME" ]; then
+    local dark_sfx=""; [ "$THEME_MODE" != "light" ] && dark_sfx="-dark"
+    if [ -d "/usr/share/themes/adw-gtk3$dark_sfx" ]; then
+      GTK_THEME_NAME="adw-gtk3$dark_sfx"
+    elif [ -n "$dark_sfx" ]; then
+      GTK_THEME_NAME="Adwaita-dark"
+    else
+      GTK_THEME_NAME="Adwaita"
+    fi
+  fi
   ICON_THEME="${icon_theme:-Papirus-Dark}"
   CURSOR_THEME="${cursor_theme:-Bibata-Modern-Amber}"
   WALL_SHADER="${wallpaper_shader:-}"
+  GTK_THEME_RAW="${gtk_theme:-auto}"   # what the user actually chose (may be "auto")
   # engine keys mirrored into PAL so `values`/the GUI can read & tweak them
   PAL[mode]="$THEME_MODE"
-  PAL[gtk_theme]="$GTK_THEME_NAME"
+  PAL[gtk_theme]="$GTK_THEME_RAW"
   PAL[icon_theme]="$ICON_THEME"
   PAL[cursor_theme]="$CURSOR_THEME"
   PAL[wallpaper_shader]="$WALL_SHADER"
@@ -381,7 +411,7 @@ save_theme() {  # $1=new slug
              font_weight term_opacity term_padding cursor_size qt_style kvantum_theme; do
       printf '%s="%s"\n' "$k" "${PAL[$k]:-}"
     done
-    echo "gtk_theme=\"${GTK_THEME_NAME}\""
+    echo "gtk_theme=\"${GTK_THEME_RAW}\""
     echo "icon_theme=\"${ICON_THEME}\""
     echo "cursor_theme=\"${CURSOR_THEME}\""
     echo "wallpaper_shader=\"${WALL_SHADER}\""

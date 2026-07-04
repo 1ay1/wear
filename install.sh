@@ -34,6 +34,7 @@ PKGS_REPO=(
   pipewire wireplumber dolphin gvfs libcanberra
   glib2 python
   python-gobject gtk4 libadwaita   # native GTK4 appearance GUI (wear-gui)
+  adw-gtk-theme                    # neutral GTK3 base recoloured by the palette
 )
 PKGS_AUR=(
   neowall-git                 # GPU shader wallpaper daemon

@@ -46,7 +46,7 @@ br_white="e8ffef"
 on_accent="050805"
 
 # GTK / Qt / KDE integration
-gtk_theme="catppuccin-mocha-green-standard+default"
+gtk_theme="auto"
 icon_theme="Papirus-Dark"
 cursor_theme="Bibata-Modern-Amber"
 

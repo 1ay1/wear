@@ -96,6 +96,15 @@ It covers **everything** — all ~60 properties:
   **wallpaper shader** — all discovered from what's actually installed on your
   system (searchable dropdowns).
 
+**One palette drives every engine.** You never recolour GTK or Qt yourself:
+the default `gtk_theme="auto"` sits GTK on a neutral base (adw-gtk3, or stock
+Adwaita) and the switcher *generates* the full colour set from your palette —
+libadwaita named colours, headerbars, buttons, switches, checks, sliders,
+tabs, menus, hover/pressed shades (computed mixes of your accent), plus the
+complete Qt5/Qt6 colour scheme and the KDE scheme. Change `accent` once and
+GTK apps, Qt apps, the terminal, the bar, notifications and window borders
+all follow — instantly.
+
 Prefer the keyboard? Everything is scriptable via the same CLI (this is exactly
 what the GUI drives under the hood):
 

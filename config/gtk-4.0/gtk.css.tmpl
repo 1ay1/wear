@@ -46,11 +46,11 @@
 
 selection {
     background-color: #{{accent}};
-    color: #{{bg}};
+    color: #{{on_accent}};
 }
 *:selected {
     background-color: #{{accent}};
-    color: #{{bg}};
+    color: #{{on_accent}};
 }
 /* Nautilus / libadwaita grid + list + sidebar selection (was purple accent tint) */
 gridview > child:selected,
@@ -62,8 +62,8 @@ row:selected,
 .navigation-sidebar row:selected,
 .view:selected,
 .view > child:selected {
-    background-color: #{{accent}} !important;
-    color: #{{bg}} !important;
+    background-color: #{{accent}};
+    color: #{{on_accent}};
 }
 /* the rounded highlight tile Nautilus draws behind grid items */
 gridview > child:selected > .thumbnail,
@@ -71,12 +71,79 @@ gridview.view > child:selected {
     background-color: alpha(#{{accent}}, 0.30);
     color: #{{fg}};
 }
-entry:focus, entry:focus-within {
-    outline-color: #{{accent}};
+
+/* ---- interactive states (derived shades follow the palette) ------------- */
+button.suggested-action {
+    background-color: #{{accent}};
+    color: #{{on_accent}};
 }
+button.suggested-action:hover { background-color: #{{accent_hover}}; }
+button.suggested-action:active { background-color: #{{accent_active}}; }
+button.destructive-action {
+    background-color: #{{red}};
+    color: #{{on_accent}};
+}
+switch:checked {
+    background-color: #{{accent}};
+}
+switch:checked > slider { background-color: #{{on_accent}}; }
+checkbutton check:checked,
+checkbutton radio:checked,
+radiobutton radio:checked {
+    background-color: #{{accent}};
+    border-color: #{{accent}};
+    color: #{{on_accent}};
+}
+scale > trough > highlight {
+    background-color: #{{accent}};
+}
+scale > trough > slider {
+    background-color: #{{fg}};
+}
+progressbar > trough > progress {
+    background-color: #{{accent}};
+}
+spinbutton:focus-within,
+entry:focus,
+entry:focus-within {
+    outline-color: #{{accent}};
+    border-color: #{{accent}};
+}
+link, link:visited > label { color: #{{accent2}}; }
+
+/* tabs / notebooks */
+notebook > header > tabs > tab:checked {
+    color: #{{accent}};
+    box-shadow: inset 0 -2px #{{accent}};
+}
+tabbar tab:selected {
+    color: #{{accent}};
+    box-shadow: inset 0 -2px #{{accent}};
+}
+
+/* menus & popovers */
+popover.menu modelbutton:hover,
+menubutton popover.menu > contents modelbutton:hover {
+    background-color: alpha(#{{accent}}, 0.22);
+}
+
+/* hover rows follow the palette (not the base theme grey) */
+listview > row:hover:not(:selected),
+row.activatable:hover:not(:selected) {
+    background-color: #{{bg_hover}};
+}
+
 tooltip {
     background-color: #{{bg_dim}};
     color: #{{fg}};
     border: 1px solid #{{accent}};
-    border-radius: 0;
+    border-radius: {{radius}}px;
+}
+
+/* text selection inside editors/terminals */
+textview text selection,
+entry > text selection,
+label selection {
+    background-color: alpha(#{{accent}}, 0.45);
+    color: #{{fg}};
 }
