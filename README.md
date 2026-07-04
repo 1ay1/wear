@@ -103,7 +103,8 @@ choosers. Every change hits the whole desktop **as you drag**.
 - **Shape** — rounding, border width, inner/outer gaps, tiling layout.
 - **Feel** — opacities, blur size/passes/vibrancy, glow, animation speed &
   style, terminal opacity & padding.
-- **Bar** — everything: position, height, margin, spacing, radius, opacity,
+- **Bar** — everything: position, height, edge margin (gap to the screen edge
+  it hugs) and side margin (left/right) independently, spacing, radius, opacity,
   border, its own font size, workspace count, clock style (seconds / minutes /
   12 h), and a **switch for every module** — window title, CPU, temperature,
   memory, GPU, disk, audio, network, bluetooth, uptime, kernel, tray, power.

@@ -185,7 +185,7 @@ write_generated_theme() { # $1=slug  $2=display-name  $3=mode  $4=wallpaper(opti
     for k in radius border_width gap_in gap_out layout \
              opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow \
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
-             bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
+             bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
              bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
              bar_mod_memory bar_mod_gpu bar_mod_disk bar_mod_audio bar_mod_network \
              bar_mod_bluetooth bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power \
@@ -238,7 +238,7 @@ load_palette() {
     radius border_width gap_in gap_out layout
     opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow
     anim_speed anim_bezier anim_style
-    bar_position bar_height bar_margin bar_spacing bar_radius
+    bar_position bar_height bar_margin bar_margin_x bar_spacing bar_radius
     bar_opacity bar_border_width bar_font_size bar_workspaces bar_clock
     bar_mod_window bar_mod_cpu bar_mod_temp bar_mod_memory bar_mod_gpu
     bar_mod_disk bar_mod_audio bar_mod_network bar_mod_bluetooth
@@ -284,6 +284,8 @@ load_palette() {
   : "${PAL[anim_style]:=slide}"
   : "${PAL[bar_position]:=top}";   : "${PAL[bar_height]:=36}"
   : "${PAL[bar_margin]:=8}";       : "${PAL[bar_spacing]:=6}"; : "${PAL[bar_radius]:=0}"
+  # side margin defaults to the edge margin so old themes look unchanged
+  : "${PAL[bar_margin_x]:=${PAL[bar_margin]}}"
   : "${PAL[bar_opacity]:=0.88}";   : "${PAL[bar_border_width]:=1}"
   : "${PAL[bar_workspaces]:=5}";   : "${PAL[bar_clock]:=seconds}"
   local _bm
@@ -306,6 +308,15 @@ load_palette() {
   local g="${PAL[glow]}"
   PAL[glow_alpha]="$(awk -v g="$g" 'BEGIN{printf "%02x", int(g*255)}')"
   PAL[glow_px]="$(awk -v g="$g" 'BEGIN{printf "%d", int(g*24)+2}')"
+
+  # derived: waybar edge margins. bar_margin is the gap to the screen edge the
+  # bar hugs (top-of-screen bar -> top; bottom bar -> bottom); the opposite
+  # edge stays flush at 0. bar_margin_x is the shared left/right gap.
+  if [ "${PAL[bar_position]}" = bottom ]; then
+    PAL[bar_margin_top]=0; PAL[bar_margin_bottom]="${PAL[bar_margin]}"
+  else
+    PAL[bar_margin_top]="${PAL[bar_margin]}"; PAL[bar_margin_bottom]=0
+  fi
 
   # derived: waybar module arrays from the bar_mod_* toggles
   local _ml='"custom/arch", "hyprland/workspaces"'
@@ -553,7 +564,7 @@ save_theme() {  # $1=new slug
              on_accent radius border_width gap_in gap_out layout \
              opacity_active opacity_inactive blur_size blur_passes blur_vibrancy glow \
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
-             bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
+             bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
              bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
              bar_mod_memory bar_mod_gpu bar_mod_disk bar_mod_audio bar_mod_network \
              bar_mod_bluetooth bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power \
@@ -626,7 +637,8 @@ term_padding|Term padding|int:0:30:2|kitty window padding px
 ## Bar
 bar_position|Bar position|choice|top,bottom
 bar_height|Bar height|int:20:56:2|px
-bar_margin|Bar margin|int:0:24:2|px from screen edge
+bar_margin|Bar edge margin|int:0:24:2|gap to the screen edge the bar hugs
+bar_margin_x|Bar side margin|int:0:40:2|gap on the left & right
 bar_spacing|Bar spacing|int:0:20:1|px between modules
 bar_radius|Bar radius|int:0:24:2|module rounding px
 bar_opacity|Bar opacity|float:0.3:1.0:0.02|background alpha
@@ -1164,8 +1176,9 @@ randomise_bar() {
   set_override bar_position "$(_rpick top top top bottom)"   # biased: top
   set_override bar_height   "$(_reven 26 40)"
   local m; m="$(_reven 0 12)"
-  set_override bar_margin  "$m"
-  set_override bar_spacing "$(_rint 2 10)"
+  set_override bar_margin   "$m"                             # gap to hugged edge
+  set_override bar_margin_x "$(_reven 0 16)"                 # side gap (independent)
+  set_override bar_spacing  "$(_rint 2 10)"
   # docked bar (no margin) looks best square; floating bar gets rounded pills
   if [ "$m" -eq 0 ]; then set_override bar_radius 0
   else set_override bar_radius "$(_reven 6 18)"; fi
