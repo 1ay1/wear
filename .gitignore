@@ -1,0 +1,5 @@
+# machine-local state, not part of the theme
+config/neowall/state/
+*.bak
+*.bak-*
+.DS_Store

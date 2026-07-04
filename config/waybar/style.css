@@ -1,0 +1,126 @@
+/* PHOSPHOR — green terminal-core */
+@define-color bg      #050805;
+@define-color bg2     #0a120a;
+@define-color grid    #103c22;
+@define-color green   #00ff41;
+@define-color dimgrn  #14b83a;
+@define-color cyan    #00e5ff;
+@define-color amber   #ffb000;
+@define-color red     #ff2b4a;
+@define-color text    #b7ffcc;
+@define-color subtext #4a7a5a;
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", monospace;
+    font-size: 13px;
+    font-weight: bold;
+    min-height: 0;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @text;
+}
+
+.modules-left, .modules-center, .modules-right {
+    background: alpha(@bg, 0.88);
+    border: 1px solid alpha(@green, 0.45);
+    box-shadow: 0 0 8px alpha(@green, 0.25);
+    padding: 0 6px;
+}
+
+@keyframes blink {
+    0%   { color: @green; text-shadow: 0 0 6px @green; }
+    49%  { color: @green; text-shadow: 0 0 6px @green; }
+    50%  { color: alpha(@green, 0.15); text-shadow: none; }
+    100% { color: alpha(@green, 0.15); text-shadow: none; }
+}
+
+#custom-arch {
+    color: @green;
+    font-size: 18px;
+    padding: 0 12px;
+    animation: blink 1.2s steps(1) infinite;
+}
+
+#workspaces button {
+    color: @subtext;
+    padding: 0 7px;
+    transition: all 0.15s ease;
+}
+#workspaces button.active {
+    color: @bg;
+    background: @green;
+    box-shadow: 0 0 10px alpha(@green, 0.6);
+    padding: 0 10px;
+}
+#workspaces button:hover {
+    color: @green;
+    background: alpha(@grid, 0.6);
+    text-shadow: 0 0 6px @green;
+}
+#workspaces button.urgent {
+    color: @bg;
+    background: @red;
+}
+
+#window {
+    color: @dimgrn;
+    padding: 0 8px;
+    font-style: italic;
+}
+
+#clock {
+    color: @green;
+    padding: 0 14px;
+    text-shadow: 0 0 8px alpha(@green, 0.8);
+}
+
+#cpu, #memory, #temperature, #pulseaudio, #network,
+#bluetooth, #battery, #tray, #custom-power, #custom-gpu {
+    padding: 0 9px;
+    margin: 2px 0;
+}
+
+#cpu        { color: @green; }
+#temperature { color: @green; }
+#temperature.critical { color: @red; text-shadow: 0 0 8px @red; }
+#memory     { color: @dimgrn; }
+
+/* GPU zone — cyan, separated from CPU zone */
+#custom-gpu {
+    color: @cyan;
+    border-left: 1px solid alpha(@green, 0.35);
+    border-right: 1px solid alpha(@green, 0.35);
+    margin: 2px 4px;
+}
+#custom-gpu.critical { color: @red; text-shadow: 0 0 8px @red; }
+#disk       { color: @dimgrn; }
+#pulseaudio { color: @cyan; }
+#pulseaudio.muted { color: @subtext; }
+#network    { color: @green; }
+#network.disconnected { color: @red; text-shadow: 0 0 8px @red; }
+#bluetooth  { color: @cyan; }
+#custom-uptime {
+    color: @subtext;
+}
+#custom-kernel {
+    color: @subtext;
+    font-style: italic;
+}
+
+#custom-power {
+    color: @red;
+    padding: 0 12px;
+    font-size: 15px;
+}
+#custom-power:hover { text-shadow: 0 0 8px @red; }
+
+tooltip {
+    background: @bg2;
+    border: 1px solid @green;
+    border-radius: 0;
+    box-shadow: 0 0 10px alpha(@green, 0.3);
+}
+tooltip label { color: @text; }

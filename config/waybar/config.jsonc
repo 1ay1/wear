@@ -1,0 +1,140 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 36,
+    "margin-top": 8,
+    "margin-left": 12,
+    "margin-right": 12,
+    "spacing": 6,
+
+    "modules-left": ["custom/arch", "hyprland/workspaces", "hyprland/window"],
+    "modules-center": ["clock"],
+    "modules-right": ["cpu", "temperature", "memory", "custom/gpu", "disk", "pulseaudio", "network", "bluetooth", "custom/uptime", "custom/kernel", "tray", "custom/power"],
+
+    "custom/arch": {
+        "format": "❯_",
+        "tooltip-format": "root@garuda — you are the payload",
+        "on-click": "rofi -show combi"
+    },
+
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "on-click": "activate",
+        "format-icons": {
+            "1": "0x1",
+            "2": "0x2",
+            "3": "0x3",
+            "4": "0x4",
+            "5": "0x5",
+            "6": "0x6",
+            "7": "0x7",
+            "8": "0x8",
+            "9": "0x9",
+            "10": "0xA"
+        },
+        "persistent-workspaces": { "*": 5 }
+    },
+
+    "hyprland/window": {
+        "format": "exec → {}",
+        "rewrite": { "^$": "[idle] — awaiting input_" },
+        "max-length": 50,
+        "separate-outputs": true
+    },
+
+    "clock": {
+        "format": " {:%H:%M:%S}",
+        "interval": 1,
+        "format-alt": " {:%Y-%m-%dT%H:%M:%S%z}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "format": {
+                "today": "<span color='#f38ba8'><b>{}</b></span>"
+            }
+        }
+    },
+
+    "cpu": {
+        "format": "cpu:{usage}% ld:{load}",
+        "interval": 2,
+        "on-click": "kitty --class htop-float -e htop"
+    },
+
+    "memory": {
+        "format": "mem:{percentage}%",
+        "tooltip-format": "{used:0.1f}G / {total:0.1f}G"
+    },
+
+    "custom/gpu": {
+        "exec": "~/.config/waybar/scripts/gpu.sh",
+        "return-type": "json",
+        "format": "{}",
+        "interval": 3,
+        "on-click": "kitty --class nvtop-float -e nvtop"
+    },
+
+    "temperature": {
+        "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
+        "input-filename": "temp1_input",
+        "critical-threshold": 82,
+        "format": "ctmp:{temperatureC}°"
+    },
+
+    "pulseaudio": {
+        "format": "vol:{volume}%",
+        "format-muted": "vol:--",
+        "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
+        "on-click": "pavucontrol",
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+    },
+
+    "network": {
+        "format-wifi": "net:{signalStrength}% ↓{bandwidthDownBytes}",
+        "format-ethernet": "eth ↓{bandwidthDownBytes} ↑{bandwidthUpBytes}",
+        "format-disconnected": "net:DOWN",
+        "interval": 2,
+        "tooltip-format": "{ifname} — {ipaddr}/{cidr}\ngw: {gwaddr}",
+        "on-click": "nm-connection-editor"
+    },
+
+    "bluetooth": {
+        "format": "󰂯",
+        "format-off": "󰂲",
+        "format-connected": "󰂱 {num_connections}",
+        "on-click": "blueman-manager"
+    },
+
+    "disk": {
+        "format": "dsk:{percentage_used}%",
+        "path": "/",
+        "interval": 60,
+        "tooltip-format": "{used} / {total} on {path}",
+        "on-click": "kitty -e ncdu /"
+    },
+
+    "custom/uptime": {
+        "exec": "awk '{s=int($1); printf \"up:%dd%02dh%02dm\", s/86400, (s%86400)/3600, (s%3600)/60}' /proc/uptime",
+        "format": "{}",
+        "interval": 60,
+        "tooltip": false
+    },
+
+    "custom/kernel": {
+        "exec": "echo \"$(uname -r | cut -d- -f1)-$(uname -r | grep -oE '[a-z]+$' || echo lnx)\"; ",
+        "format": " {}",
+        "interval": 3600,
+        "tooltip": false
+    },
+
+    "tray": {
+        "spacing": 10,
+        "icon-size": 16
+    },
+
+    "custom/power": {
+        "format": "⏻",
+        "on-click": "wlogout -b 3 -c 8 -r 8 -L 400 -R 400",
+        "tooltip-format": "shutdown -h now"
+    }
+}

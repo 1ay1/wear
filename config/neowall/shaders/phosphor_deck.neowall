@@ -1,0 +1,6 @@
+# phosphor_deck — oscilloscope bank bindings.
+# Buffer A: self-feedback ring buffer of cpu/gpu/net history.
+shader phosphor_deck.glsl
+
+bufferA { ch0 self }
+image   { ch1 bufferA }

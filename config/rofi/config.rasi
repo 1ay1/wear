@@ -1,0 +1,156 @@
+/* PHOSPHOR — green terminal-core rofi */
+
+configuration {
+    modi: "combi,drun,run,window,ssh,filebrowser,kill:~/.config/rofi/scripts/kill.sh";
+    combi-modi: "drun,run,window";
+    show-icons: false;
+    terminal: "kitty";
+    ssh-client: "ssh";
+    parse-hosts: true;
+    parse-known-hosts: true;
+    matching: "fuzzy";
+    sorting-method: "fzf";
+    sort: true;
+    display-combi: "sys ❯";
+    display-drun: "exec ❯";
+    display-run: "sh ❯";
+    display-window: "wnd ❯";
+    display-ssh: "ssh ❯";
+    display-filebrowser: "fs ❯";
+    display-kill: "kill ❯";
+    drun-display-format: "{name}";
+    window-format: "{c} · {t}";
+    font: "JetBrainsMono Nerd Font Bold 12";
+    kb-mode-next: "Shift+Right,Control+Tab";
+    kb-mode-previous: "Shift+Left,Control+ISO_Left_Tab";
+}
+
+* {
+    bg:      #050805FA;
+    bg-alt:  #0a120aF0;
+    fg:      #b7ffcc;
+    fg-alt:  #4a7a5a;
+    accent:  #00ff41;
+    accent2: #00e5ff;
+    urgent:  #ff2b4a;
+
+    background-color: transparent;
+    text-color: @fg;
+}
+
+window {
+    transparency: "real";
+    background-color: @bg;
+    border: 1px;
+    border-color: @accent;
+    border-radius: 0px;
+    width: 560px;
+    padding: 2px;
+}
+
+mainbox {
+    padding: 14px;
+    spacing: 10px;
+}
+
+inputbar {
+    background-color: @bg-alt;
+    border: 1px;
+    border-color: @accent;
+    border-radius: 0px;
+    padding: 10px 14px;
+    spacing: 8px;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    text-color: @accent;
+}
+
+entry {
+    text-color: #e8ffef;
+    cursor: text;
+    cursor-color: @accent;
+    placeholder: "query database_";
+    placeholder-color: @fg-alt;
+}
+
+listview {
+    lines: 9;
+    spacing: 2px;
+    scrollbar: false;
+    cycle: true;
+    background-color: transparent;
+    border: 0;
+}
+
+element {
+    padding: 8px 12px;
+    border-radius: 0px;
+    background-color: transparent;
+    text-color: @fg;
+}
+
+element normal.normal,
+element alternate.normal {
+    background-color: transparent;
+    text-color: @fg;
+}
+
+element normal.active,
+element alternate.active {
+    background-color: transparent;
+    text-color: @accent2;
+}
+
+element selected.normal,
+element selected.active {
+    background-color: @accent;
+    text-color: #041008;
+}
+
+element normal.urgent,
+element alternate.urgent,
+element selected.urgent {
+    background-color: transparent;
+    text-color: @urgent;
+}
+
+element-text {
+    background-color: transparent;
+    text-color: inherit;
+    /* no fixed color: bold+underline inherits row text color, so matches stay
+       dark-on-green when selected and bright-on-black when not */
+    highlight: bold underline;
+}
+
+element-icon {
+    background-color: transparent;
+}
+
+message {
+    background-color: @bg-alt;
+    border: 1px;
+    border-color: @fg-alt;
+    padding: 8px;
+}
+
+textbox { text-color: @fg-alt; }
+
+mode-switcher {
+    background-color: transparent;
+    spacing: 8px;
+}
+
+button {
+    background-color: @bg-alt;
+    text-color: @fg-alt;
+    border: 1px;
+    border-color: #103c22;
+    padding: 6px;
+}
+
+button selected {
+    background-color: @accent;
+    text-color: #050805;
+}

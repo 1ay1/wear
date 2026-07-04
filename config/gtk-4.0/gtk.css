@@ -1,0 +1,82 @@
+/* PHOSPHOR — full GTK4 / libadwaita surface override. */
+
+/* libadwaita named colors */
+@define-color accent_color #00ff41;
+@define-color accent_bg_color #00ff41;
+@define-color accent_fg_color #050805;
+@define-color destructive_color #ff2b4a;
+@define-color destructive_bg_color #ff2b4a;
+@define-color destructive_fg_color #050805;
+@define-color success_color #00ff41;
+@define-color success_bg_color #00ff41;
+@define-color success_fg_color #050805;
+@define-color warning_color #ffb000;
+@define-color warning_bg_color #ffb000;
+@define-color warning_fg_color #050805;
+@define-color error_color #ff2b4a;
+@define-color error_bg_color #ff2b4a;
+@define-color error_fg_color #050805;
+
+@define-color window_bg_color #080d09;
+@define-color window_fg_color #b7ffcc;
+@define-color view_bg_color #050805;
+@define-color view_fg_color #b7ffcc;
+@define-color headerbar_bg_color #0a120c;
+@define-color headerbar_fg_color #b7ffcc;
+@define-color headerbar_border_color #173b26;
+@define-color headerbar_backdrop_color #050805;
+@define-color headerbar_shade_color rgba(0, 0, 0, 0.36);
+@define-color card_bg_color #0a120c;
+@define-color card_fg_color #b7ffcc;
+@define-color card_shade_color rgba(0, 0, 0, 0.36);
+@define-color dialog_bg_color #080d09;
+@define-color dialog_fg_color #b7ffcc;
+@define-color popover_bg_color #0a120c;
+@define-color popover_fg_color #b7ffcc;
+@define-color sidebar_bg_color #080d09;
+@define-color sidebar_fg_color #b7ffcc;
+@define-color sidebar_backdrop_color #050805;
+@define-color sidebar_shade_color rgba(0, 0, 0, 0.36);
+@define-color secondary_sidebar_bg_color #060a07;
+@define-color secondary_sidebar_fg_color #b7ffcc;
+@define-color thumbnail_bg_color #0a120c;
+@define-color thumbnail_fg_color #b7ffcc;
+@define-color shade_color rgba(0, 0, 0, 0.36);
+@define-color scrollbar_outline_color #173b26;
+
+selection {
+    background-color: #00ff41;
+    color: #050805;
+}
+*:selected {
+    background-color: #00ff41;
+    color: #050805;
+}
+/* Nautilus / libadwaita grid + list + sidebar selection (was purple accent tint) */
+gridview > child:selected,
+gridview > child:selected:hover,
+columnview listview > row:selected,
+listview > row:selected,
+row:selected,
+.navigation-sidebar > row:selected,
+.navigation-sidebar row:selected,
+.view:selected,
+.view > child:selected {
+    background-color: #00ff41 !important;
+    color: #050805 !important;
+}
+/* the rounded highlight tile Nautilus draws behind grid items */
+gridview > child:selected > .thumbnail,
+gridview.view > child:selected {
+    background-color: alpha(#00ff41, 0.30);
+    color: #b7ffcc;
+}
+entry:focus, entry:focus-within {
+    outline-color: #00ff41;
+}
+tooltip {
+    background-color: #080d09;
+    color: #b7ffcc;
+    border: 1px solid #00ff41;
+    border-radius: 0;
+}

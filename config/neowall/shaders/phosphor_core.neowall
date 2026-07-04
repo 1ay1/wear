@@ -1,0 +1,4 @@
+# phosphor_core manifest — explicit bindings so audio FFT is always live
+shader phosphor_core.glsl
+
+channel0 audio
