@@ -135,7 +135,13 @@ class WearWindow(Adw.ApplicationWindow):
         rnd_btn.connect("clicked", lambda *_: self._run_and_refresh("random-accents"))
         header.pack_start(rnd_btn)
 
+        undo_btn = Gtk.Button(icon_name="edit-undo-symbolic", tooltip_text="Undo last change")
+        undo_btn.connect("clicked", lambda *_: self._run_and_refresh("undo"))
+        header.pack_start(undo_btn)
+
         menu = Gio.Menu()
+        menu.append("Theme from wallpaper…", "win.from-image")
+        menu.append("Theme from a colour…", "win.from-color")
         menu.append("Save as new theme…", "win.save")
         menu.append("Reset all tweaks", "win.reset")
         menu_btn = Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu)
@@ -365,12 +371,12 @@ class WearWindow(Adw.ApplicationWindow):
 
     # -- header actions ------------------------------------------------------
     def _install_actions(self):
-        save = Gio.SimpleAction.new("save", None)
-        save.connect("activate", self._on_save)
-        self.add_action(save)
-        reset = Gio.SimpleAction.new("reset", None)
-        reset.connect("activate", self._on_reset)
-        self.add_action(reset)
+        for name, cb in (("save", self._on_save), ("reset", self._on_reset),
+                         ("from-image", self._on_from_image),
+                         ("from-color", self._on_from_color)):
+            act = Gio.SimpleAction.new(name, None)
+            act.connect("activate", cb)
+            self.add_action(act)
 
     def _on_reset(self, *_):
         dlg = Adw.MessageDialog(transient_for=self, heading="Reset all tweaks?",
@@ -415,6 +421,41 @@ class WearWindow(Adw.ApplicationWindow):
         dlg.set_extra_child(listbox)
         dlg.add_response("close", "Close")
         dlg.present()
+
+    def _on_from_image(self, *_):
+        """Generate a whole theme from an image the user picks."""
+        dlg = Gtk.FileDialog(title="Theme from image")
+        f = Gtk.FileFilter()
+        f.set_name("Images")
+        for pat in ("*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp"):
+            f.add_pattern(pat)
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(f)
+        dlg.set_filters(filters)
+
+        def _done(d, res):
+            try:
+                gfile = d.open_finish(res)
+            except GLib.Error:
+                return
+            path = gfile.get_path()
+            if path:
+                self._run_and_refresh("from", path)
+        dlg.open(self, None, _done)
+
+    def _on_from_color(self, *_):
+        """Generate a whole theme from a single seed colour."""
+        cdlg = Gtk.ColorDialog(title="Seed colour", with_alpha=False)
+
+        def _done(d, res):
+            try:
+                rgba = d.choose_rgba_finish(res)
+            except GLib.Error:
+                return
+            if rgba:
+                self._run_and_refresh("from-color", rgba_to_hex(rgba))
+        cdlg.choose_rgba(self, hex_to_rgba(self.values.get("accent", "3366cc")),
+                         None, _done)
 
 
 class WearApp(Adw.Application):

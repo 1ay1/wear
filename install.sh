@@ -30,7 +30,7 @@ PKGS_REPO=(
   papirus-icon-theme bibata-cursor-theme
   ttf-jetbrains-mono-nerd ttf-firacode-nerd ttf-nerd-fonts-symbols
   wl-clipboard cliphist grim slurp polkit-gnome network-manager-applet blueman libnotify
-  satty wf-recorder jq fzf hyprpicker wlogout brightnessctl playerctl
+  satty wf-recorder jq fzf imagemagick hyprpicker wlogout brightnessctl playerctl
   pipewire wireplumber dolphin gvfs libcanberra
   glib2 python
   python-gobject gtk4 libadwaita   # native GTK4 appearance GUI (wear-gui)

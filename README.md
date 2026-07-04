@@ -120,8 +120,44 @@ wear set accent ff8800
 wear set gap_out 24
 wear tweaks           # show your active tweaks
 wear unset radius     # drop one tweak
+wear undo             # revert the last change — 30 steps of history
 wear reset            # clear all tweaks, back to the pure theme
 wear save my-look     # snapshot the current look as a new theme
+wear show             # truecolor palette swatches in the terminal
+```
+
+### 🪄 Generate a theme from anything
+
+Don't design — generate. `wear` has a built-in colour engine (HSL math,
+pure awk) that turns **one seed colour** into a complete, balanced palette:
+tinted backgrounds, readable foregrounds, harmonised accent trio (±30° hues),
+and a full ANSI-16 set — then applies it to the entire desktop.
+
+```sh
+wear from ~/Pictures/wall.jpg      # theme from a wallpaper/photo
+wear from-color 7c3aed             # theme from one hex colour
+wear from-color ff7b39 sunset --light
+```
+
+`wear from <image>` quantises the image (imagemagick), scores candidates by
+saturation, picks the most vivid non-grey as the seed, and blends the
+background toward the image's actual darkest tone so the theme *feels* like
+the picture. Both generators inherit the current theme's structure (shape,
+fonts, blur…), write a real `themes/<name>.theme`, and switch to it — so a
+generated theme is a first-class theme you can tweak and keep. Don't like it?
+`wear undo`.
+
+In the GUI these live in the menu: **Theme from wallpaper…** (file picker) and
+**Theme from a colour…** (colour wheel), plus an undo button in the header.
+
+### 🐚 Your shell follows too
+
+Every switch renders `~/.config/phosphor/colors.sh` — the palette as `PHOS_*`
+env vars plus a matching `FZF_DEFAULT_OPTS` colour scheme. Source it from your
+shell rc and fzf menus (and any script you write) match the desktop:
+
+```sh
+[ -f ~/.config/phosphor/colors.sh ] && . ~/.config/phosphor/colors.sh
 ```
 
 On a headless / non-GTK session `wear tweak` automatically falls back to a
