@@ -412,22 +412,22 @@ load_palette() {
       PAL[fmt_audio]='{volume}%';              PAL[fmt_audio_muted]='--'
       PAL[fmt_net_wifi]='{signalStrength}%';   PAL[fmt_net_eth]='eth'
       PAL[fmt_net_down]='down'
-      PAL[fmt_gpu]='%U%' ;;
+      PAL[fmt_gpu]='%U% %T°' ;;
     icons)
       PAL[fmt_cpu]=$'\uf4bc {usage}%';         PAL[fmt_memory]=$'\uf538 {percentage}%'
       PAL[fmt_temp]=$'\uf2c9 {temperatureC}\u00b0';  PAL[fmt_audio]='{icon} {volume}%'
       PAL[fmt_disk]=$'\uf0a0 {percentage_used}%';  PAL[fmt_audio_muted]=$'\uf026'
       PAL[fmt_net_wifi]=$'\uf1eb {signalStrength}%'; PAL[fmt_net_eth]=$'\uf0e8'
       PAL[fmt_net_down]=$'\uf127'
-      PAL[fmt_gpu]=$'\uf109 %U%' ;;
+      PAL[fmt_gpu]=$'\uf109 %U% %T\u00b0' ;;
     *)  # normal: short prefixes, the phosphor default
       PAL[fmt_cpu]='cpu {usage}%';             PAL[fmt_memory]='mem {percentage}%'
-      PAL[fmt_temp]='tmp {temperatureC}°';     PAL[fmt_disk]='dsk {percentage_used}%'
+      PAL[fmt_temp]='cpu {temperatureC}°';     PAL[fmt_disk]='dsk {percentage_used}%'
       PAL[fmt_audio]='vol {volume}%';          PAL[fmt_audio_muted]='vol --'
       PAL[fmt_net_wifi]='net {signalStrength}%'
       PAL[fmt_net_eth]='eth {bandwidthDownBytes}'
       PAL[fmt_net_down]='net down'
-      PAL[fmt_gpu]='gpu %U%' ;;
+      PAL[fmt_gpu]='gpu %U% %T°' ;;
   esac
 
   # bar_uppercase: GTK CSS has no text-transform, so genuinely upcase the
@@ -522,6 +522,39 @@ load_palette() {
   [ "${PAL[bar_glow_text]}" = off ] \
     && PAL[bar_glow_text_css]='' \
     || PAL[bar_glow_text_css]='#cpu, #memory, #temperature, #disk, #network, #pulseaudio, #custom-gpu { text-shadow: 0 0 6px alpha(currentColor, 0.6); }'
+
+  # derived: CPU temperature sensor path (portable auto-detect). Waybar's
+  # temperature module defaults to thermal_zone0 which is often a chipset or
+  # ACPI zone, not the CPU package. Scan hwmon for the real CPU sensor
+  # (k10temp = AMD, coretemp = Intel, cpu_thermal = ARM) and hand waybar the
+  # concrete temp*_input file so 'cpu NN' actually tracks the CPU. Empty when
+  # nothing matches -> the module falls back to thermal_zone0 gracefully.
+  PAL[cpu_temp_hwmon]=""
+  local _hw _nm _inp
+  for _hw in /sys/class/hwmon/hwmon*; do
+    [ -r "$_hw/name" ] || continue
+    _nm="$(cat "$_hw/name" 2>/dev/null)"
+    case "$_nm" in
+      k10temp|coretemp|cpu_thermal|zenpower)
+        # prefer Tctl/Tdie/Package label if present, else first temp input
+        _inp=""
+        for _lbl in "$_hw"/temp*_label; do
+          [ -r "$_lbl" ] || continue
+          case "$(cat "$_lbl" 2>/dev/null)" in
+            Tctl|Tdie|Package*|Core\ 0) _inp="${_lbl%_label}_input"; break ;;
+          esac
+        done
+        [ -z "$_inp" ] && _inp="$(ls "$_hw"/temp*_input 2>/dev/null | head -1)"
+        [ -n "$_inp" ] && { PAL[cpu_temp_hwmon]="$_inp"; break; } ;;
+    esac
+  done
+  # JSON fragment appended after the format line (leading comma) only when a
+  # sensor was found; empty otherwise so waybar keeps its thermal_zone0 default.
+  if [ -n "${PAL[cpu_temp_hwmon]}" ]; then
+    PAL[temp_hwmon_line]=", \"hwmon-path\": \"${PAL[cpu_temp_hwmon]}\""
+  else
+    PAL[temp_hwmon_line]=""
+  fi
 
   # derived shades — computed mixes so widget hover/pressed states follow the
   # palette automatically (no extra keys for the user to define).
