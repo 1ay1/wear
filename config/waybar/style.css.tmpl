@@ -18,7 +18,7 @@ window#waybar {
     background: alpha(@bg, {{bar_opacity}});
     border: {{bar_border_width}}px solid alpha(@green, 0.45);
     box-shadow: 0 0 {{glow_px}}px alpha(@green, {{glow}});
-    padding: 0 6px;
+    padding: 0 {{bar_padding}}px;
 }
 
 @keyframes blink {
@@ -70,7 +70,7 @@ window#waybar {
 
 #cpu, #memory, #temperature, #pulseaudio, #network,
 #bluetooth, #battery, #tray, #custom-power, #custom-gpu {
-    padding: 0 9px;
+    padding: 0 {{bar_padding}}px;
     margin: 2px 0;
 }
 

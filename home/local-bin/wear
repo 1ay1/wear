@@ -186,7 +186,8 @@ write_generated_theme() { # $1=slug  $2=display-name  $3=mode  $4=wallpaper(opti
              opacity_active opacity_inactive blur_size blur_passes blur_vibrancy \
              blur_noise blur_contrast blur_brightness glow \
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
-             bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
+             bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width \
+             bar_padding bar_tray_size bar_font_size \
              bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
              bar_mod_memory bar_mod_gpu bar_mod_disk bar_mod_audio bar_mod_network \
              bar_mod_bluetooth bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power \
@@ -241,7 +242,7 @@ load_palette() {
     blur_noise blur_contrast blur_brightness
     anim_speed anim_bezier anim_style
     bar_position bar_height bar_margin bar_margin_x bar_spacing bar_radius
-    bar_opacity bar_border_width bar_font_size bar_workspaces bar_clock
+    bar_opacity bar_border_width bar_padding bar_tray_size bar_font_size bar_workspaces bar_clock
     bar_mod_window bar_mod_cpu bar_mod_temp bar_mod_memory bar_mod_gpu
     bar_mod_disk bar_mod_audio bar_mod_network bar_mod_bluetooth
     bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power
@@ -293,6 +294,7 @@ load_palette() {
   # side margin defaults to the edge margin so old themes look unchanged
   : "${PAL[bar_margin_x]:=${PAL[bar_margin]}}"
   : "${PAL[bar_opacity]:=0.88}";   : "${PAL[bar_border_width]:=1}"
+  : "${PAL[bar_padding]:=6}";      : "${PAL[bar_tray_size]:=16}"
   : "${PAL[bar_workspaces]:=5}";   : "${PAL[bar_clock]:=seconds}"
   local _bm
   for _bm in window cpu temp memory gpu disk audio network bluetooth uptime kernel tray power; do
@@ -571,7 +573,8 @@ save_theme() {  # $1=new slug
              opacity_active opacity_inactive blur_size blur_passes blur_vibrancy \
              blur_noise blur_contrast blur_brightness glow \
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
-             bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width bar_font_size \
+             bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width \
+             bar_padding bar_tray_size bar_font_size \
              bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
              bar_mod_memory bar_mod_gpu bar_mod_disk bar_mod_audio bar_mod_network \
              bar_mod_bluetooth bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power \
@@ -653,6 +656,8 @@ bar_spacing|Bar spacing|int:0:20:1|px between modules
 bar_radius|Bar radius|int:0:24:2|module rounding px
 bar_opacity|Bar opacity|float:0.3:1.0:0.02|background alpha
 bar_border_width|Bar border|int:0:4:1|px around module groups
+bar_padding|Bar padding|int:2:20:1|horizontal room inside each module
+bar_tray_size|Tray icon size|int:12:28:1|px system-tray icons
 bar_font_size|Bar font size|int:9:20:1|px (independent of UI font size)
 bar_workspaces|Workspaces shown|int:1:10:1|persistent workspace pills
 bar_clock|Clock style|choice|seconds,minutes,12h
@@ -1197,6 +1202,8 @@ randomise_bar() {
   else set_override bar_radius "$(_reven 6 18)"; fi
   set_override bar_opacity      "$(_rfloat 0.70 1.0)"
   set_override bar_border_width "$(_rint 0 2)"
+  set_override bar_padding      "$(_rint 5 12)"
+  set_override bar_tray_size    "$(_rint 14 20)"
 }
 
 randomise_popups() {

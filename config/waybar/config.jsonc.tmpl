@@ -76,8 +76,6 @@
     },
 
     "temperature": {
-        "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
-        "input-filename": "temp1_input",
         "critical-threshold": 82,
         "format": "ctmp:{temperatureC}°"
     },
@@ -130,7 +128,7 @@
 
     "tray": {
         "spacing": 10,
-        "icon-size": 16
+        "icon-size": {{bar_tray_size}}
     },
 
     "custom/power": {
