@@ -207,22 +207,40 @@ write_generated_theme() { # $1=slug  $2=display-name  $3=mode  $4=wallpaper(opti
 }
 
 # --- render a single template ($1=src.tmpl  $2=dest) using the loaded palette
+# Build the {{KEY}} -> value sed program ONCE from the current PAL, into the
+# global RENDER_PROG. All 20 template renders reuse it instead of rebuilding
+# the ~180-key program per file (the old per-call loop was the dominant cost
+# of a theme apply). Call after load_palette, before the render() batch.
+build_render_prog() {
+  RENDER_PROG=""; local k v
+  for k in "${!PAL[@]}"; do
+    v="${PAL[$k]}"
+    if [[ "$v" =~ ^[0-9a-fA-F]{6}$ ]]; then
+      RENDER_PROG+="s|{{${k}\\|rgb}}|$(hex_to_rgb "$v")|g;"
+    fi
+    RENDER_PROG+="s|{{${k}}}|${v}|g;"
+  done
+  RENDER_PROG+="s|{{THEME_NAME}}|${THEME_DISPLAY}|g;"
+}
+
 render() {
   local src="$1" dest="$2"
   [ -f "$src" ] || { warn "missing template: $src"; return 0; }
   mkdir -p "$(dirname "$dest")"
-  # Build a sed program: {{KEY}} -> value, {{KEY|rgb}} -> R,G,B (hex keys only),
-  # {{THEME_NAME}} -> display name.
-  local prog="" k v
-  for k in "${!PAL[@]}"; do
-    v="${PAL[$k]}"
-    # only colour keys (exactly 6 hex digits) get an {{KEY|rgb}} decimal form
-    if [[ "$v" =~ ^[0-9a-fA-F]{6}$ ]]; then
-      prog+="s|{{${k}\\|rgb}}|$(hex_to_rgb "$v")|g;"
-    fi
-    prog+="s|{{${k}}}|${v}|g;"
-  done
-  prog+="s|{{THEME_NAME}}|${THEME_DISPLAY}|g;"
+  # Reuse the prebuilt RENDER_PROG when present (fast path); otherwise build a
+  # one-off program so a stray render() call still works standalone.
+  local prog="${RENDER_PROG:-}"
+  if [ -z "$prog" ]; then
+    local k v
+    for k in "${!PAL[@]}"; do
+      v="${PAL[$k]}"
+      if [[ "$v" =~ ^[0-9a-fA-F]{6}$ ]]; then
+        prog+="s|{{${k}\\|rgb}}|$(hex_to_rgb "$v")|g;"
+      fi
+      prog+="s|{{${k}}}|${v}|g;"
+    done
+    prog+="s|{{THEME_NAME}}|${THEME_DISPLAY}|g;"
+  fi
   sed -e "$prog" "$src" > "$dest"
 }
 
@@ -650,29 +668,34 @@ apply_theme() {
   load_palette "$slug"
   say "Switching to ${BOLD}${THEME_DISPLAY}${NC}"
 
+  # build the shared sed program once, then render every template in parallel
+  # (they are independent files; on a multicore box this is a big win over the
+  # old sequential loop that also rebuilt the program per file).
+  build_render_prog
+
   # 1. render every templated config -> live ~/.config
-  render "$REPO/config/kitty/current-theme.conf.tmpl"     "$CFG/kitty/current-theme.conf"
-  render "$REPO/config/dunst/dunstrc.tmpl"                "$CFG/dunst/dunstrc"
-  render "$REPO/config/rofi/colors.rasi.tmpl"             "$CFG/rofi/colors.rasi"
-  render "$REPO/config/rofi/theme-picker.rasi.tmpl"       "$CFG/rofi/theme-picker.rasi"
-  render "$REPO/config/waybar/colors.css.tmpl"            "$CFG/waybar/colors.css"
-  render "$REPO/config/waybar/style.css.tmpl"             "$CFG/waybar/style.css"
-  render "$REPO/config/waybar/config.jsonc.tmpl"          "$CFG/waybar/config.jsonc"
-  render "$REPO/config/waybar/scripts/gpu.sh.tmpl"         "$CFG/waybar/scripts/gpu.sh"
-  chmod +x "$CFG/waybar/scripts/gpu.sh" 2>/dev/null || true
-  render "$REPO/config/waybar/scripts/cpu.sh.tmpl"         "$CFG/waybar/scripts/cpu.sh"
-  chmod +x "$CFG/waybar/scripts/cpu.sh" 2>/dev/null || true
-  render "$REPO/config/hypr/theme-colors.conf.tmpl"       "$CFG/hypr/theme-colors.conf"
-  render "$REPO/config/hypr/hyprlock.conf.tmpl"           "$CFG/hypr/hyprlock.conf"
-  render "$REPO/config/kitty/theme-structure.conf.tmpl"   "$CFG/kitty/theme-structure.conf"
-  render "$REPO/config/gtk-3.0/gtk.css.tmpl"              "$CFG/gtk-3.0/gtk.css"
-  render "$REPO/config/gtk-4.0/gtk.css.tmpl"              "$CFG/gtk-4.0/gtk.css"
-  render "$REPO/config/qt5ct/colors/theme.conf.tmpl"      "$CFG/qt5ct/colors/theme.conf"
-  render "$REPO/config/qt6ct/colors/theme.conf.tmpl"      "$CFG/qt6ct/colors/theme.conf"
-  render "$REPO/config/satty/config.toml.tmpl"            "$CFG/satty/config.toml"
-  render "$REPO/config/wlogout/style.css.tmpl"            "$CFG/wlogout/style.css"
-  render "$REPO/config/phosphor/colors.sh.tmpl"           "$CFG/phosphor/colors.sh"
-  render "$REPO/kde/color-schemes/theme.colors.tmpl"      "$HOME/.local/share/color-schemes/Phosphor.colors"
+  render "$REPO/config/kitty/current-theme.conf.tmpl"     "$CFG/kitty/current-theme.conf" &
+  render "$REPO/config/dunst/dunstrc.tmpl"                "$CFG/dunst/dunstrc" &
+  render "$REPO/config/rofi/colors.rasi.tmpl"             "$CFG/rofi/colors.rasi" &
+  render "$REPO/config/rofi/theme-picker.rasi.tmpl"       "$CFG/rofi/theme-picker.rasi" &
+  render "$REPO/config/waybar/colors.css.tmpl"            "$CFG/waybar/colors.css" &
+  render "$REPO/config/waybar/style.css.tmpl"             "$CFG/waybar/style.css" &
+  render "$REPO/config/waybar/config.jsonc.tmpl"          "$CFG/waybar/config.jsonc" &
+  render "$REPO/config/waybar/scripts/gpu.sh.tmpl"         "$CFG/waybar/scripts/gpu.sh" &
+  render "$REPO/config/waybar/scripts/cpu.sh.tmpl"         "$CFG/waybar/scripts/cpu.sh" &
+  render "$REPO/config/hypr/theme-colors.conf.tmpl"       "$CFG/hypr/theme-colors.conf" &
+  render "$REPO/config/hypr/hyprlock.conf.tmpl"           "$CFG/hypr/hyprlock.conf" &
+  render "$REPO/config/kitty/theme-structure.conf.tmpl"   "$CFG/kitty/theme-structure.conf" &
+  render "$REPO/config/gtk-3.0/gtk.css.tmpl"              "$CFG/gtk-3.0/gtk.css" &
+  render "$REPO/config/gtk-4.0/gtk.css.tmpl"              "$CFG/gtk-4.0/gtk.css" &
+  render "$REPO/config/qt5ct/colors/theme.conf.tmpl"      "$CFG/qt5ct/colors/theme.conf" &
+  render "$REPO/config/qt6ct/colors/theme.conf.tmpl"      "$CFG/qt6ct/colors/theme.conf" &
+  render "$REPO/config/satty/config.toml.tmpl"            "$CFG/satty/config.toml" &
+  render "$REPO/config/wlogout/style.css.tmpl"            "$CFG/wlogout/style.css" &
+  render "$REPO/config/phosphor/colors.sh.tmpl"           "$CFG/phosphor/colors.sh" &
+  render "$REPO/kde/color-schemes/theme.colors.tmpl"      "$HOME/.local/share/color-schemes/Phosphor.colors" &
+  wait
+  chmod +x "$CFG/waybar/scripts/gpu.sh" "$CFG/waybar/scripts/cpu.sh" 2>/dev/null || true
   info "rendered config templates"
 
   # point qt5ct/qt6ct at the freshly rendered color scheme + set widget style/font
@@ -762,10 +785,16 @@ reload_apps() {
     pkill -x dunst 2>/dev/null || true
     ( setsid dunst >/dev/null 2>&1 & ) || true
   fi
-  # waybar
+  # waybar — reload IN PLACE via SIGUSR2 (on-sigusr2=reload is waybar's
+  # default): rereads config + CSS with no flicker and no respawn. Only if no
+  # instance is running do we start one. This is what makes a theme switch feel
+  # instant instead of the old kill-and-relaunch blink.
   if command -v waybar >/dev/null 2>&1; then
-    pkill -x waybar 2>/dev/null || true
-    ( setsid waybar >/dev/null 2>&1 & ) || true
+    if pgrep -x waybar >/dev/null 2>&1; then
+      pkill -SIGUSR2 -x waybar 2>/dev/null || true
+    else
+      ( setsid waybar >/dev/null 2>&1 & ) || true
+    fi
   fi
   # gtk apps: bump the theme to force a reread (xsettings)
   command -v gsettings >/dev/null 2>&1 && \
