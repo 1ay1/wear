@@ -425,7 +425,7 @@ load_palette() {
       PAL[fmt_disk]=$'\uf0a0 {percentage_used}%';  PAL[fmt_audio_muted]=$'\uf026'
       PAL[fmt_net_wifi]=$'\uf1eb {signalStrength}%'; PAL[fmt_net_eth]=$'\uf0e8'
       PAL[fmt_net_down]=$'\uf127'
-      PAL[fmt_gpu]=$'\uf109 %U% %T\u00b0'
+      PAL[fmt_gpu]=$'\uf109 %U% %V% %T\u00b0'
       PAL[fmt_cpu_combo]=$'\uf4bc %U% %T\u00b0' ;;
     *)  # normal: short prefixes, the phosphor default
       PAL[fmt_cpu]='cpu {usage}%';             PAL[fmt_memory]='mem {percentage}%'
@@ -434,7 +434,7 @@ load_palette() {
       PAL[fmt_net_wifi]='net {signalStrength}%'
       PAL[fmt_net_eth]='eth {bandwidthDownBytes}'
       PAL[fmt_net_down]='net down'
-      PAL[fmt_gpu]='gpu %U% %T°'
+      PAL[fmt_gpu]='gpu %U% vram %V% %T°'
       PAL[fmt_cpu_combo]='cpu %U% %T°' ;;
   esac
 
