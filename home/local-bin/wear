@@ -434,7 +434,7 @@ load_palette() {
       PAL[fmt_net_wifi]='net {signalStrength}%'
       PAL[fmt_net_eth]='eth {bandwidthDownBytes}'
       PAL[fmt_net_down]='net down'
-      PAL[fmt_gpu]='gpu %U% vram %V% %T°'
+      PAL[fmt_gpu]='gpu %U% %T°'
       PAL[fmt_cpu_combo]='cpu %U% %T°' ;;
   esac
 
