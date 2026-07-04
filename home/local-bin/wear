@@ -188,7 +188,8 @@ write_generated_theme() { # $1=slug  $2=display-name  $3=mode  $4=wallpaper(opti
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
              bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width \
              bar_padding bar_tray_size bar_font_size \
-             bar_style bar_layer bar_autohide bar_uppercase \
+             bar_style bar_layer bar_autohide bar_uppercase bar_verbosity \
+             bar_ws_style bar_accent_style bar_blink \
              bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
              bar_mod_memory bar_mod_gpu bar_mod_disk bar_mod_audio bar_mod_network \
              bar_mod_bluetooth bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power \
@@ -244,7 +245,8 @@ load_palette() {
     anim_speed anim_bezier anim_style
     bar_position bar_height bar_margin bar_margin_x bar_spacing bar_radius
     bar_opacity bar_border_width bar_padding bar_tray_size bar_font_size bar_workspaces bar_clock
-    bar_style bar_layer bar_autohide bar_uppercase
+    bar_style bar_layer bar_autohide bar_uppercase bar_verbosity
+    bar_ws_style bar_accent_style bar_blink
     bar_mod_window bar_mod_cpu bar_mod_temp bar_mod_memory bar_mod_gpu
     bar_mod_disk bar_mod_audio bar_mod_network bar_mod_bluetooth
     bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power
@@ -302,6 +304,10 @@ load_palette() {
   : "${PAL[bar_layer]:=top}"         # top | bottom (draw behind windows)
   : "${PAL[bar_autohide]:=off}"      # off | on  (mode=hide, reveal on hover)
   : "${PAL[bar_uppercase]:=off}"     # off | on  (UPPERCASE all module text)
+  : "${PAL[bar_verbosity]:=normal}"  # verbose | normal | minimal | icons
+  : "${PAL[bar_ws_style]:=pills}"     # numbers | pills | dots
+  : "${PAL[bar_accent_style]:=fill}"  # fill | underline | outline
+  : "${PAL[bar_blink]:=on}"           # on | off  (the prompt-cursor blink)
   : "${PAL[bar_workspaces]:=5}";   : "${PAL[bar_clock]:=seconds}"
   local _bm
   for _bm in window cpu temp memory gpu disk audio network bluetooth uptime kernel tray power; do
@@ -327,10 +333,32 @@ load_palette() {
   # derived: waybar edge margins. bar_margin is the gap to the screen edge the
   # bar hugs (top-of-screen bar -> top; bottom bar -> bottom); the opposite
   # edge stays flush at 0. bar_margin_x is the shared left/right gap.
-  if [ "${PAL[bar_position]}" = bottom ]; then
-    PAL[bar_margin_top]=0; PAL[bar_margin_bottom]="${PAL[bar_margin]}"
+  # derived: waybar edge margins. bar_margin is the gap to the screen edge the
+  # bar hugs (top-of-screen bar -> top; bottom bar -> bottom; a vertical
+  # left/right bar hugs that side); the opposite edge stays flush at 0.
+  # bar_margin_x is the shared cross-axis gap.
+  case "${PAL[bar_position]}" in
+    bottom)
+      PAL[bar_margin_top]=0; PAL[bar_margin_bottom]="${PAL[bar_margin]}"
+      PAL[bar_margin_left]="${PAL[bar_margin_x]}"; PAL[bar_margin_right]="${PAL[bar_margin_x]}" ;;
+    left)
+      PAL[bar_margin_left]="${PAL[bar_margin]}"; PAL[bar_margin_right]=0
+      PAL[bar_margin_top]="${PAL[bar_margin_x]}"; PAL[bar_margin_bottom]="${PAL[bar_margin_x]}" ;;
+    right)
+      PAL[bar_margin_left]=0; PAL[bar_margin_right]="${PAL[bar_margin]}"
+      PAL[bar_margin_top]="${PAL[bar_margin_x]}"; PAL[bar_margin_bottom]="${PAL[bar_margin_x]}" ;;
+    *)  # top
+      PAL[bar_margin_top]="${PAL[bar_margin]}"; PAL[bar_margin_bottom]=0
+      PAL[bar_margin_left]="${PAL[bar_margin_x]}"; PAL[bar_margin_right]="${PAL[bar_margin_x]}" ;;
+  esac
+  # vertical bars stack modules; flag it so the css/config can adapt
+  case "${PAL[bar_position]}" in left|right) PAL[bar_vertical]=1 ;; *) PAL[bar_vertical]=0 ;; esac
+  if [ "${PAL[bar_vertical]}" = 1 ]; then
+    # a vertical bar stacks modules; wide text (window title, clock seconds)
+    # would balloon the width, so hide the title and keep labels compact.
+    PAL[bar_vertical_css]='#window { min-width: 0; } .modules-left, .modules-center, .modules-right { padding: 6px 0; } #workspaces { padding: 0; } #workspaces button { padding: 6px 0; } tooltip { margin-left: 8px; }'
   else
-    PAL[bar_margin_top]="${PAL[bar_margin]}"; PAL[bar_margin_bottom]=0
+    PAL[bar_vertical_css]=''
   fi
 
   # derived: bar layout presets -> waybar config + css fragments.
@@ -345,7 +373,7 @@ load_palette() {
     PAL[bar_mode]=dock; PAL[bar_exclusive]=true
   fi
   [ "${PAL[bar_uppercase]}" = on ] \
-    && PAL[bar_text_transform]='text-transform: uppercase; letter-spacing: 0.5px;' \
+    && PAL[bar_text_transform]='letter-spacing: 1.5px;' \
     || PAL[bar_text_transform]=''
   # the pill: background + border + glow + rounding + padding
   local _pill="background: alpha(@bg, ${PAL[bar_opacity]}); border: ${PAL[bar_border_width]}px solid alpha(@green, 0.45); box-shadow: 0 0 ${PAL[glow_px]}px alpha(@green, ${PAL[glow]}); padding: 0 ${PAL[bar_padding]}px;"
@@ -363,6 +391,77 @@ load_palette() {
       PAL[bar_group_css]="$_pill"
       PAL[bar_item_css]="padding: 0 ${PAL[bar_padding]}px;" ;;
   esac
+
+  # derived: per-module format strings from bar_verbosity. Four density
+  # levels swap every stat module's label at once (config.jsonc reads the
+  # fmt_* keys). Glyphs are Nerd Font; no '|' (the render sed delimiter).
+  case "${PAL[bar_verbosity]}" in
+    verbose)
+      PAL[fmt_cpu]='cpu:{usage}% ld:{load}';   PAL[fmt_memory]='mem:{percentage}%'
+      PAL[fmt_temp]='ctmp:{temperatureC}°';     PAL[fmt_disk]='dsk:{percentage_used}%'
+      PAL[fmt_audio]='vol:{volume}%';          PAL[fmt_audio_muted]='vol:--'
+      PAL[fmt_net_wifi]='net:{signalStrength}% ↓{bandwidthDownBytes}'
+      PAL[fmt_net_eth]='eth ↓{bandwidthDownBytes} ↑{bandwidthUpBytes}'
+      PAL[fmt_net_down]='net:DOWN' ;;
+    minimal)
+      PAL[fmt_cpu]='{usage}%';                 PAL[fmt_memory]='{percentage}%'
+      PAL[fmt_temp]='{temperatureC}°';         PAL[fmt_disk]='{percentage_used}%'
+      PAL[fmt_audio]='{volume}%';              PAL[fmt_audio_muted]='--'
+      PAL[fmt_net_wifi]='{signalStrength}%';   PAL[fmt_net_eth]='eth'
+      PAL[fmt_net_down]='down' ;;
+    icons)
+      PAL[fmt_cpu]=' {usage}%';               PAL[fmt_memory]=' {percentage}%'
+      PAL[fmt_temp]=' {temperatureC}°';       PAL[fmt_disk]=' {percentage_used}%'
+      PAL[fmt_audio]='{icon} {volume}%';       PAL[fmt_audio_muted]=' '
+      PAL[fmt_net_wifi]=' {signalStrength}%'; PAL[fmt_net_eth]=''
+      PAL[fmt_net_down]='' ;;
+    *)  # normal: short prefixes, the phosphor default
+      PAL[fmt_cpu]='cpu {usage}%';             PAL[fmt_memory]='mem {percentage}%'
+      PAL[fmt_temp]='tmp {temperatureC}°';     PAL[fmt_disk]='dsk {percentage_used}%'
+      PAL[fmt_audio]='vol {volume}%';          PAL[fmt_audio_muted]='vol --'
+      PAL[fmt_net_wifi]='net {signalStrength}%'
+      PAL[fmt_net_eth]='eth {bandwidthDownBytes}'
+      PAL[fmt_net_down]='net down' ;;
+  esac
+
+  # bar_uppercase: GTK CSS has no text-transform, so genuinely upcase the
+  # literal text in each format string (letters OUTSIDE {placeholders}).
+  if [ "${PAL[bar_uppercase]}" = on ]; then
+    local _uk _uv
+    for _uk in fmt_cpu fmt_memory fmt_temp fmt_disk fmt_audio fmt_audio_muted \
+               fmt_net_wifi fmt_net_eth fmt_net_down; do
+      _uv="${PAL[$_uk]}"
+      PAL[$_uk]="$(awk -v s="$_uv" 'BEGIN{
+        out=""; inb=0
+        for(i=1;i<=length(s);i++){c=substr(s,i,1)
+          if(c=="{")inb=1; if(c=="}")inb=0
+          out=out (inb?c:toupper(c)) }
+        print out }')"
+    done
+  fi
+
+  # derived: workspace label style. pills = the custom 0x1..0xA glyphs via
+  # {icon}; numbers = the raw workspace id; dots = a bullet per workspace.
+  case "${PAL[bar_ws_style]}" in
+    numbers) PAL[fmt_ws]='{id}' ;;
+    dots)    PAL[fmt_ws]='●' ;;
+    *)       PAL[fmt_ws]='{icon}' ;;
+  esac
+
+  # derived: active-workspace accent treatment.
+  #   fill      = solid accent block (the phosphor default)
+  #   underline = transparent, accent underline bar
+  #   outline   = transparent, accent border ring
+  case "${PAL[bar_accent_style]}" in
+    underline) PAL[bar_ws_active_css]='color: @green; background: transparent; border-bottom: 2px solid @green; padding: 0 7px; text-shadow: 0 0 6px @green;' ;;
+    outline)   PAL[bar_ws_active_css]='color: @green; background: transparent; border: 1px solid @green; padding: 0 9px; box-shadow: 0 0 8px alpha(@green, 0.5);' ;;
+    *)         PAL[bar_ws_active_css]='color: @bg; background: @green; box-shadow: 0 0 10px alpha(@green, 0.6); padding: 0 10px;' ;;
+  esac
+
+  # derived: the blinking prompt-cursor animation on the arch glyph
+  [ "${PAL[bar_blink]}" = off ] \
+    && PAL[bar_blink_css]='' \
+    || PAL[bar_blink_css]='animation: blink 1.2s steps(1) infinite;'
 
   # derived: waybar module arrays from the bar_mod_* toggles
   local _ml='"custom/arch", "hyprland/workspaces"'
@@ -613,7 +712,8 @@ save_theme() {  # $1=new slug
              anim_speed anim_bezier anim_style bar_position bar_height bar_margin \
              bar_margin_x bar_spacing bar_radius bar_opacity bar_border_width \
              bar_padding bar_tray_size bar_font_size \
-             bar_style bar_layer bar_autohide bar_uppercase \
+             bar_style bar_layer bar_autohide bar_uppercase bar_verbosity \
+             bar_ws_style bar_accent_style bar_blink \
              bar_workspaces bar_clock bar_mod_window bar_mod_cpu bar_mod_temp \
              bar_mod_memory bar_mod_gpu bar_mod_disk bar_mod_audio bar_mod_network \
              bar_mod_bluetooth bar_mod_uptime bar_mod_kernel bar_mod_tray bar_mod_power \
@@ -687,11 +787,15 @@ anim_style|Anim style|choice|slide,popin,fade
 term_opacity|Term opacity|float:0.5:1.0:0.02|kitty background
 term_padding|Term padding|int:0:30:2|kitty window padding px
 ## Bar
-bar_position|Bar position|choice|top,bottom
+bar_position|Bar position|choice|top,bottom,left,right
 bar_style|Bar style|choice|merged,islands,flat,minimal
 bar_layer|Bar layer|choice|top,bottom
 bar_autohide|Auto-hide bar|choice|off,on
 bar_uppercase|Uppercase text|choice|off,on
+bar_verbosity|Module detail|choice|verbose,normal,minimal,icons
+bar_ws_style|Workspace style|choice|pills,numbers,dots
+bar_accent_style|Active accent style|choice|fill,underline,outline
+bar_blink|Prompt blink|choice|on,off
 bar_height|Bar height|int:20:56:2|px
 bar_margin|Bar edge margin|int:0:24:2|gap to the screen edge the bar hugs
 bar_margin_x|Bar side margin|int:0:40:2|gap on the left & right
@@ -1237,6 +1341,10 @@ randomise_bar() {
   set_override bar_position "$(_rpick top top top bottom)"   # biased: top
   set_override bar_style    "$(_rpick merged merged islands flat minimal)"
   set_override bar_uppercase "$(_rpick off off off on)"
+  set_override bar_verbosity "$(_rpick verbose normal normal minimal icons)"
+  set_override bar_ws_style   "$(_rpick pills pills numbers dots)"
+  set_override bar_accent_style "$(_rpick fill fill underline outline)"
+  set_override bar_blink      "$(_rpick on off)"
   set_override bar_height   "$(_reven 26 40)"
   local m; m="$(_reven 0 12)"
   set_override bar_margin   "$m"                             # gap to hugged edge

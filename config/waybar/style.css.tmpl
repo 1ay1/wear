@@ -40,7 +40,7 @@ window#waybar {
     color: @green;
     font-size: 18px;
     padding: 0 12px;
-    animation: blink 1.2s steps(1) infinite;
+    {{bar_blink_css}}
 }
 
 #workspaces button {
@@ -49,10 +49,7 @@ window#waybar {
     transition: all 0.15s ease;
 }
 #workspaces button.active {
-    color: @bg;
-    background: @green;
-    box-shadow: 0 0 10px alpha(@green, 0.6);
-    padding: 0 10px;
+    {{bar_ws_active_css}}
 }
 #workspaces button:hover {
     color: @green;
@@ -122,3 +119,6 @@ tooltip {
     box-shadow: 0 0 10px alpha(@green, 0.3);
 }
 tooltip label { color: @text; }
+
+/* vertical (left/right) bar tweaks — empty for horizontal bars */
+{{bar_vertical_css}}

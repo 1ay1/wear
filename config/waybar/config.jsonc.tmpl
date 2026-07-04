@@ -7,8 +7,8 @@
     "height": {{bar_height}},
     "margin-top": {{bar_margin_top}},
     "margin-bottom": {{bar_margin_bottom}},
-    "margin-left": {{bar_margin_x}},
-    "margin-right": {{bar_margin_x}},
+    "margin-left": {{bar_margin_left}},
+    "margin-right": {{bar_margin_right}},
     "spacing": {{bar_spacing}},
 
     "modules-left": [{{bar_modules_left}}],
@@ -22,8 +22,10 @@
     },
 
     "hyprland/workspaces": {
-        "format": "{icon}",
+        "format": "{{fmt_ws}}",
         "on-click": "activate",
+        "on-scroll-up": "hyprctl dispatch workspace e+1",
+        "on-scroll-down": "hyprctl dispatch workspace e-1",
         "format-icons": {
             "1": "0x1",
             "2": "0x2",
@@ -60,13 +62,13 @@
     },
 
     "cpu": {
-        "format": "cpu:{usage}% ld:{load}",
+        "format": "{{fmt_cpu}}",
         "interval": 2,
         "on-click": "kitty --class htop-float -e htop"
     },
 
     "memory": {
-        "format": "mem:{percentage}%",
+        "format": "{{fmt_memory}}",
         "tooltip-format": "{used:0.1f}G / {total:0.1f}G"
     },
 
@@ -80,21 +82,23 @@
 
     "temperature": {
         "critical-threshold": 82,
-        "format": "ctmp:{temperatureC}°"
+        "format": "{{fmt_temp}}"
     },
 
     "pulseaudio": {
-        "format": "vol:{volume}%",
-        "format-muted": "vol:--",
-        "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
+        "format": "{{fmt_audio}}",
+        "format-muted": "{{fmt_audio_muted}}",
+        "format-icons": { "default": ["", "", ""] },
         "on-click": "pavucontrol",
-        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-"
     },
 
     "network": {
-        "format-wifi": "net:{signalStrength}% ↓{bandwidthDownBytes}",
-        "format-ethernet": "eth ↓{bandwidthDownBytes} ↑{bandwidthUpBytes}",
-        "format-disconnected": "net:DOWN",
+        "format-wifi": "{{fmt_net_wifi}}",
+        "format-ethernet": "{{fmt_net_eth}}",
+        "format-disconnected": "{{fmt_net_down}}",
         "interval": 2,
         "tooltip-format": "{ifname} — {ipaddr}/{cidr}\ngw: {gwaddr}",
         "on-click": "nm-connection-editor"
@@ -108,7 +112,7 @@
     },
 
     "disk": {
-        "format": "dsk:{percentage_used}%",
+        "format": "{{fmt_disk}}",
         "path": "/",
         "interval": 60,
         "tooltip-format": "{used} / {total} on {path}",
