@@ -8,6 +8,9 @@ Phosphor CRT vibes across your **entire** desktop — Hyprland, Waybar, Kitty,
 Rofi, Dunst, GTK 3/4, Qt 5/6, KDE apps, cursors, icons, and an animated
 GPU-shader wallpaper. One command. Everything themed. Nothing left blue.
 
+![Phosphor desktop](assets/screenshot-1.png)
+![Phosphor desktop](assets/screenshot-2.png)
+
 </div>
 
 ---
@@ -15,16 +18,16 @@ GPU-shader wallpaper. One command. Everything themed. Nothing left blue.
 ## ⚡ One-command install
 
 ```sh
-git clone https://github.com/YOURNAME/phosphor-hypr.git && cd phosphor-hypr && ./install.sh
+git clone https://github.com/1ay1/phosphor-hypr.git && cd phosphor-hypr && ./install.sh
 ```
 
 or, straight from the web:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/YOURNAME/phosphor-hypr/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/1ay1/phosphor-hypr/main/bootstrap.sh | bash
 ```
 
-> Replace `YOURNAME` with your GitHub username after you push the repo.
+
 
 The installer will:
 

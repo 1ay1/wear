@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Phosphor bootstrap: clone the repo then run the installer.
-# Usage:  curl -fsSL https://raw.githubusercontent.com/YOURNAME/phosphor-hypr/main/bootstrap.sh | bash
+# Usage:  curl -fsSL https://raw.githubusercontent.com/1ay1/phosphor-hypr/main/bootstrap.sh | bash
 set -euo pipefail
 
-REPO_URL="${PHOSPHOR_REPO:-https://github.com/YOURNAME/phosphor-hypr.git}"
+REPO_URL="${PHOSPHOR_REPO:-https://github.com/1ay1/phosphor-hypr.git}"
 DEST="${PHOSPHOR_DIR:-$HOME/.local/share/phosphor-hypr}"
 
 command -v git >/dev/null 2>&1 || { echo "git is required"; exit 1; }
