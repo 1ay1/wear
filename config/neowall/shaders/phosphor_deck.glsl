@@ -97,45 +97,11 @@ vec3 beam(float d, float sd, vec3 tint){
 // back-compat unsigned overload (fringe disabled)
 vec3 beam(float d, vec3 tint){ return beam(d, 0.0, tint); }
 
-// ---- 3x5 bitmap font ----
-float lrow(float ch, float r){
-    if (ch < 0.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?4.0 : r<4.0?4.0 : 7.0; // C 0
-    if (ch < 1.5) return r<1.0?7.0 : r<2.0?5.0 : r<3.0?7.0 : r<4.0?4.0 : 4.0; // P 1
-    if (ch < 2.5) return r<1.0?5.0 : r<2.0?5.0 : r<3.0?5.0 : r<4.0?5.0 : 7.0; // U 2
-    if (ch < 3.5) return r<1.0?5.0 : r<2.0?7.0 : r<3.0?5.0 : r<4.0?5.0 : 5.0; // M 3
-    if (ch < 4.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?7.0 : r<4.0?4.0 : 7.0; // E 4
-    if (ch < 5.5) return r<1.0?5.0 : r<2.0?7.0 : r<3.0?7.0 : r<4.0?5.0 : 5.0; // N 5
-    if (ch < 6.5) return r<1.0?7.0 : r<2.0?2.0 : r<3.0?2.0 : r<4.0?2.0 : 2.0; // T 6
-    if (ch < 7.5) return r<1.0?6.0 : r<2.0?5.0 : r<3.0?6.0 : r<4.0?5.0 : 5.0; // R 7
-    if (ch < 8.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?7.0 : r<4.0?1.0 : 7.0; // S 8
-    if (ch < 9.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?5.0 : r<4.0?5.0 : 7.0; // G 9
-    // digits 10..19 -> 0..9
-    float d = ch - 10.0;
-    if (d < 0.5) return r<1.0?7.0 : r<2.0?5.0 : r<3.0?5.0 : r<4.0?5.0 : 7.0; // 0
-    if (d < 1.5) return r<1.0?2.0 : r<2.0?6.0 : r<3.0?2.0 : r<4.0?2.0 : 7.0; // 1
-    if (d < 2.5) return r<1.0?7.0 : r<2.0?1.0 : r<3.0?7.0 : r<4.0?4.0 : 7.0; // 2
-    if (d < 3.5) return r<1.0?7.0 : r<2.0?1.0 : r<3.0?3.0 : r<4.0?1.0 : 7.0; // 3
-    if (d < 4.5) return r<1.0?5.0 : r<2.0?5.0 : r<3.0?7.0 : r<4.0?1.0 : 1.0; // 4
-    if (d < 5.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?7.0 : r<4.0?1.0 : 7.0; // 5
-    if (d < 6.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?7.0 : r<4.0?5.0 : 7.0; // 6
-    if (d < 7.5) return r<1.0?7.0 : r<2.0?1.0 : r<3.0?1.0 : r<4.0?1.0 : 1.0; // 7
-    if (d < 8.5) return r<1.0?7.0 : r<2.0?5.0 : r<3.0?7.0 : r<4.0?5.0 : 7.0; // 8
-    if (d < 9.5) return r<1.0?7.0 : r<2.0?5.0 : r<3.0?7.0 : r<4.0?1.0 : 7.0; // 9
-    // hex letters, ids 20..25 -> A B C D E F
-    float h = ch - 20.0;
-    if (h < 0.5) return r<1.0?7.0 : r<2.0?5.0 : r<3.0?7.0 : r<4.0?5.0 : 5.0; // A
-    if (h < 1.5) return r<1.0?6.0 : r<2.0?5.0 : r<3.0?6.0 : r<4.0?5.0 : 6.0; // B
-    if (h < 2.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?4.0 : r<4.0?4.0 : 7.0; // C
-    if (h < 3.5) return r<1.0?6.0 : r<2.0?5.0 : r<3.0?5.0 : r<4.0?5.0 : 6.0; // D
-    if (h < 4.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?7.0 : r<4.0?4.0 : 7.0; // E
-    if (h < 5.5) return r<1.0?7.0 : r<2.0?4.0 : r<3.0?7.0 : r<4.0?4.0 : 4.0; // F
-    if (h < 6.5) return r<1.0?5.0 : r<2.0?5.0 : r<3.0?5.0 : r<4.0?5.0 : 2.0; // V 26
-    if (h < 7.5) return r<1.0?5.0 : r<2.0?1.0 : r<3.0?2.0 : r<4.0?4.0 : 5.0; // % 27
-    if (h < 8.5) return r<1.0?0.0 : r<2.0?2.0 : r<3.0?0.0 : r<4.0?2.0 : 0.0; // : 28
-    if (h < 9.5) return r<1.0?5.0 : r<2.0?5.0 : r<3.0?2.0 : r<4.0?2.0 : 2.0; // Y 29
-    if (h <10.5) return r<1.0?0.0 : r<2.0?5.0 : r<3.0?2.0 : r<4.0?5.0 : 0.0; // x 30
-    return              r<1.0?5.0 : r<2.0?5.0 : r<3.0?5.0 : r<4.0?7.0 : 5.0; // W 31
-}
+// ---- 3x5 bitmap font (LEGACY, superseded by the font atlas) ----
+// The old procedural glyph tables (lrow) and the mnem() opcode table are gone;
+// letterPx now maps the old glyph ids to ASCII and samples iChannel2 (font).
+float glyphAscii(float ch);   // fwd decl (defined below)
+
 // map an old lrow glyph-id to a real ASCII code, so all the legacy
 // label/num/hex helpers can render through the crisp font atlas (iChannel2).
 // ids: 0-9 = C P U M E N T R S G ; 10-19 = '0'-'9' ; 20-25 = A-F ;
@@ -205,27 +171,8 @@ float hex1(vec2 fragCoord, vec2 pos, float s, float nib){
     return letterPx(p, hexId(clamp(floor(nib + 0.5), 0.0, 15.0)));
 }
 
-// ---- opcode mnemonic table: id -> 3 glyph codes (for the disasm ticker) ----
-// glyph ids (from lrow): C0 P1 U2 M3 E4 N5 T6 R7 S8 G9  A20 B21 C22 D23 E24 F25 V26
-vec3 mnem(float id){
-    id = mod(floor(id), 16.0);
-    if (id < 0.5)  return vec3(20.0, 23.0, 23.0); // A D D
-    if (id < 1.5)  return vec3(22.0,  3.0,  1.0); // C M P
-    if (id < 2.5)  return vec3(22.0, 20.0,  8.0); // C A S
-    if (id < 3.5)  return vec3(24.0,  5.0, 23.0); // E N D
-    if (id < 4.5)  return vec3( 7.0,  4.0,  6.0); // R E T
-    if (id < 5.5)  return vec3( 9.0,  4.0,  6.0); // G E T
-    if (id < 6.5)  return vec3(21.0,  6.0,  8.0); // B T S
-    if (id < 7.5)  return vec3(22.0,  6.0,  7.0); // C T R
-    if (id < 8.5)  return vec3( 8.0,  4.0,  6.0); // S E T
-    if (id < 9.5)  return vec3( 5.0, 26.0,  6.0); // N V T
-    if (id <10.5)  return vec3(23.0,  4.0,  0.0); // D E C
-    if (id <11.5)  return vec3(24.0,  5.0, 22.0); // E N C
-    if (id <12.5)  return vec3(20.0,  5.0, 23.0); // A N D
-    if (id <13.5)  return vec3( 8.0,  6.0,  7.0); // S T R
-    if (id <14.5)  return vec3(22.0, 20.0,  7.0); // C A R
-    return              vec3( 5.0, 26.0,  1.0);   // N V P
-}
+// ---- opcode mnemonic table: removed (the disasm ticker now uses a real
+// single-byte x86 opcode->mnemonic map inline in the Image pass).
 
 // corner bracket set for a rect (px coords), hud-style
 float brackets(vec2 fragCoord, vec2 lo, vec2 hi, float len, float th){
@@ -718,16 +665,40 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         L *= 1.0 - fire * 0.25 * step(0.5, fract(uv.x * 8.0));      // dropout comb
     }
 
-    // ---- finish: subtle scan texture, grade, grain, beat bloom ----
-    L *= 0.975 + 0.025 * sin(fragCoord.y * 3.14159);          // faint scan
-    vec2 q = (uv - 0.5) * vec2(iResolution.x / iResolution.y, 1.0);
-    float vig = 1.0 - 0.34 * dot(q, q);
+    // ---- finish: CRT phosphor grade ----
+    // 1) cheap bloom-lite: bright pixels bleed a soft self-halo so beams and
+    //    text glow like real phosphor. We can't blur L in-pass, so approximate:
+    //    lift the luminance tail with a smooth knee and add it back as a wide,
+    //    desaturated wash keyed to how bright this pixel already is.
+    float lum = dot(L, vec3(0.299, 0.587, 0.114));
+    float glow = smoothstep(0.18, 0.9, lum);
+    L += L * glow * 0.35 + vec3(0.9, 1.0, 0.95) * glow * glow * 0.05;
+
+    // 2) barrel warp coordinate (curved glass): sample space bulges outward
+    //    at the edges. Used for vignette + scanline phase, not for resampling,
+    //    so it stays a single-pass grade with no extra taps.
+    vec2 cc = uv * 2.0 - 1.0;
+    vec2 warp = cc * (1.0 + 0.045 * dot(cc, cc));   // subtle bulge
+
+    // 3) scanlines: a cheap triangle-wave darkening every ~2px, riding the
+    //    warped y so the lines curve with the glass. No per-pixel trig, no
+    //    high-frequency vertical grille (that was the expensive part).
+    float sy = (warp.y * 0.5 + 0.5) * iResolution.y * 0.5;
+    float scan = 0.965 + 0.035 * abs(fract(sy) * 2.0 - 1.0);
+    L *= scan;
+
+    // 4) vignette + tube edge falloff from the warped radius (rounded corners)
+    float r2 = dot(warp, warp);
+    float vig = smoothstep(2.4, 0.35, r2);
     L *= vig;
-    L += nebInk * (1.0 - vig) * 0.05;                          // cool tint bleeding in at edges
-    L *= 1.0 + iAudioBeat * 0.21;                             // beat bloom (single multiply)
+    L += nebInk * (1.0 - vig) * 0.05;               // cool tint bleeding in at edges
+
+    L *= 1.0 + iAudioBeat * 0.21;                    // beat bloom (single multiply)
 
     vec3 col = nwGamma(nwTonemap(L));
     // fine grain — makes gradients feel like film, not plastic
     col += (rnd(fragCoord.xy + fract(t)) - 0.5) * (1.8 / 255.0);
+    // hard black outside the tube (rounded-rect bezel)
+    col *= step(r2, 2.3);
     fragColor = vec4(col, 1.0);
 }
