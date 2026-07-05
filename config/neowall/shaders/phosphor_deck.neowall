@@ -3,4 +3,4 @@
 shader phosphor_deck.glsl
 
 bufferA { ch0 self }
-image   { ch1 bufferA }
+image   { ch1 bufferA ch2 font }
